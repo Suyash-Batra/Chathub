@@ -1,0 +1,27 @@
+{% for r in rooms %}
+<article class="room-card">
+    <div class="room-card__header">
+        <a href="{% url 'user-profile' r.host.id %}" class="room-author">
+            <span>@{{ r.host.username }}</span>
+        </a>
+        
+        {% if r.host == request.user %}
+        <div class="room-actions">
+            <a href="{% url 'update-room' r.id %}" class="action-link edit">Edit</a>
+            <a href="{% url 'delete-room' r.id %}" class="action-link delete">Delete</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="room-card__content">
+        <h3 class="room-title">
+            <a href="{% url 'room' r.id %}">{{ r.name }}</a>
+        </h3>
+        <p class="room-topic-tag">{{ r.topic.name }}</p>
+    </div>
+    
+    <div class="room-card__footer">
+        <a href="{% url 'room' r.id %}" class="btn-join">Enter Chat</a>
+    </div>
+</article>
+{% endfor %}

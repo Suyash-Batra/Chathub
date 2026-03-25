@@ -1,0 +1,47 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            {% if page == 'login' %}
+            <h2>Welcome Back</h2>
+            <p>Log in to join the conversation</p>
+            {% else %}
+            <h2>Create Account</h2>
+            <p>Join the ChatHub community today</p>
+            {% endif %}
+        </div>
+
+        <form method="POST" action="" class="auth-form">
+            {% csrf_token %}
+            
+            {% if page == 'login' %}
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" placeholder="e.g. alex_dev" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="pass" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn btn-auth">Login</button>
+            
+            {% else %}
+            <div class="form-django">
+                {{form.as_p}}
+            </div>
+            <button type="submit" class="btn btn-auth">Create Account</button>
+            {% endif %}
+        </form>
+
+        <div class="auth-footer">
+            {% if page == 'login' %}
+            <p>Don't have an account? <a href="{% url 'register' %}">Register</a></p>
+            {% else %}
+            <p>Already have an account? <a href="{% url 'login' %}">Login</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

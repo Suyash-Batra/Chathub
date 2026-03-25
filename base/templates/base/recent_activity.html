@@ -1,0 +1,30 @@
+<div class="activity-feed">
+    {% for message in room_messages %}
+    <div class="activity-item">
+        <div class="activity-header">
+            <a href="{% url 'user-profile' message.user.id %}" class="activity-user">
+                <span>@{{message.user}}</span>
+            </a>
+            <small class="activity-time">{{message.created|timesince}} ago</small>
+        </div>
+
+        <div class="activity-content">
+            <p class="activity-room-name">
+                Replied in <a href="{% url 'room' message.room.id %}">"{{message.room}}"</a>
+            </p>
+            <div class="activity-message">
+                {{message.body|truncatechars:100}}
+            </div>
+        </div>
+
+        {% if request.user == message.user %}
+        <div class="activity-actions">
+            <a href="{% url 'delete-message' message.id %}" class="delete-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                Delete
+            </a>
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>

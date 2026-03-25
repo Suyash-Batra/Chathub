@@ -1,0 +1,40 @@
+{% extends 'main.html' %}
+{% block content %}
+
+<div class="home-container">
+    <aside class="topics-sidebar">
+        <h3 class="sidebar-title">Browse Topics</h3>
+        <nav class="topic-list">
+            <a href="{% url 'home' %}" class="topic-item active">All Rooms</a>
+            {% for topic in topics %}
+            <a href="{% url 'home' %}?q={{topic.name}}" class="topic-item">
+                {{topic.name}} <span>{{topic.room_set.all.count}}</span>
+            </a>
+            {% endfor %}
+            <a href="{% url 'add-topic'%}"><button class="btn btn-primary" style="border: none; display: block; margin: 0 auto;">Add Topic</button></a>
+        </nav>
+    </aside>
+
+    <section class="feed-section">
+        <div class="feed-header">
+            <div>
+                <h2>Chat Rooms</h2>
+                <p class="text-muted">{{roomcount}} rooms available</p>
+            </div>
+            <a href="{% url 'create-room' %}" class="btn btn-primary">+ Create Room</a>
+        </div>
+        
+        <div class="feed-container">
+            {% include "base/feed.html" %}
+        </div>
+    </section>
+
+    <aside class="activity-sidebar">
+        <h3 class="sidebar-title">Recent Activity</h3>
+        <div class="activity-container">
+            {% include "base/recent_activity.html" %}
+        </div>
+    </aside>
+</div>
+
+{% endblock %}

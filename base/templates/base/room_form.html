@@ -1,0 +1,28 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="settings-page">
+    <div class="settings-card">
+        <header class="settings-header">
+            <a href="{{request.META.HTTP_REFERER}}" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Back
+            </a>
+            <h2>Edit Content</h2>
+            <p>Update the information below.</p>
+        </header>
+
+        <form method="POST" action="" class="settings-form">
+            {% csrf_token %}
+            
+            <div class="django-form-wrapper">
+                {{form.as_p}}
+            </div>
+
+            <div class="settings-actions">
+                <button type="submit" class="btn btn-save">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock content %}

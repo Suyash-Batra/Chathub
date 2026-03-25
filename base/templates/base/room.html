@@ -1,0 +1,67 @@
+{% extends "main.html" %} 
+{% block content %}
+
+<div class="room-container">
+    <aside class="participants-sidebar">
+        <h3 class="sidebar-title">Participants <span>({{participants.count}})</span></h3>
+        <div class="participant-list">
+            {% for p in participants %}
+            <a href="{% url 'user-profile' p.id %}" class="participant-item">
+                <span>@{{p.username}}</span>
+            </a>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <section class="chat-main">
+        <header class="chat-header">
+            <div class="chat-header__info">
+                <h1>{{ room.name }}</h1>
+                <p class="text-muted">{{ room.description|default:"No description provided." }}</p>
+            </div>
+            <a href="{{request.META.HTTP_REFERER}}" class="btn-back">Exit Room</a>
+        </header>
+
+        <div class="messages-window">
+<div class="messages-list">
+    {% for message in room_messages %}
+    <div class="message-item {% if request.user == message.user %}message-item--me{% endif %}">
+        <div class="message-meta">
+            <a href="{% url 'user-profile' message.user.id %}">@{{message.user}}</a>
+            <small>{{message.created|timesince}} ago</small>
+        </div>
+        <div class="message-bubble">
+            <p>{{message.body}}</p>
+            {% if request.user == message.user %}
+            <a href="{% url 'delete-message' message.id %}" class="msg-delete" title="Delete message">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-chat">No messages yet. Start the conversation!</div>
+    {% endfor %}
+</div>
+        </div>
+
+        <div class="chat-input-area">
+            {% if request.user.is_authenticated %}
+            <form action="" method="POST" class="chat-form">
+                {% csrf_token %}
+                <input type="text" name="body" placeholder="Message #{{room.name}}" required autocomplete="off">
+                <button type="submit">Send</button>
+            </form>
+            {% else %}
+            <p class="auth-notice">Please <a href="{% url 'login' %}">Login</a> to participate in the chat.</p>
+            {% endif %}
+        </div>
+    </section>
+
+    <aside class="activity-sidebar">
+        <h3 class="sidebar-title">Global Activity</h3>
+        {% include "base/recent_activity.html" %}
+    </aside>
+</div>
+
+{% endblock %}

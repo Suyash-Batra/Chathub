@@ -1,0 +1,39 @@
+{% extends "main.html" %}
+{% block content %}
+
+<div class="settings-page">
+    <div class="settings-card">
+        <header class="settings-header">
+            <a href="{{request.META.HTTP_REFERER}}" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                Go Back
+            </a>
+            <h2>Edit Profile</h2>
+            <p>Modify your account details below.</p>
+        </header>
+
+        <form action="" method="POST" class="settings-form">
+            {% csrf_token %}
+            
+            <div class="form-body">
+                {% for field in form %}
+                <div class="form-group">
+                    <label class="form-label">{{field.label}}</label>
+                    <div class="form-input-wrapper">
+                        {{field}}
+                    </div>
+                    {% if field.errors %}
+                        <small class="form-error">{{field.errors|striptags}}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="form-actions">
+                <input type="submit" value="Save Changes" class="btn-save">
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}

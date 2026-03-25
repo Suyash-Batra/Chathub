@@ -1,0 +1,49 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<div class="profile-container">
+    <header class="profile-header">
+        <div class="profile-meta">
+            <h1 class="profile-username">@{{users.username}}</h1>
+            <p class="profile-joined">Joined {{users.date_joined|date:"F Y"}}</p>
+        </div>
+        
+        {% if request.user == users %}
+        <div class="profile-actions">
+            <a href="{% url 'update-user' %}"><button class="action-link edit" style="border: none">Edit Profile</button></a>
+        </div>
+        {% endif %}
+    </header>
+
+    <div class="profile-grid">
+        <aside class="topics-sidebar">
+            <h3 class="sidebar-title">Browse Topics</h3>
+            <nav class="topic-list">
+                <a href="{% url 'home' %}" class="topic-item">All Rooms</a>
+                {% for topic in topics %}
+                <a href="{% url 'home' %}?q={{topic.name}}" class="topic-item">
+                    {{topic.name}}
+                </a>
+                {% endfor %}
+            </nav>
+        </aside>
+
+        <section class="profile-main">
+            <div class="section-header">
+                <h2>Rooms Hosted - {{roomcount}}</h2>
+                <br>
+            </div>
+            <div class="profile-feed">
+                {% include "base/feed.html" %}
+            </div>
+        </section>
+
+        <aside class="activity-sidebar">
+            <h3 class="sidebar-title">Recent Activity</h3>
+            <div class="profile-activity">
+                {% include "base/recent_activity.html" %}
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock content %}
