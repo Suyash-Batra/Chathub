@@ -15,4 +15,5 @@ urlpatterns = [
     path('profile/<str:pk>/', views.userProfile, name="user-profile"),
     path('update-user/', views.updateUser, name="update-user"),
     path('add-topic/', views.addTopic, name="add-topic"),
+    # path('delete-topic/<str:pk>/', views.deleteTopic, name="delete-topic"),
 ]
