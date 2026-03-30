@@ -19,7 +19,6 @@
                 <h1>{{ room.name }}</h1>
                 <p class="text-muted">{{ room.description|default:"No description provided." }}</p>
             </div>
-            <a href="{{request.META.HTTP_REFERER}}" class="btn-back">Exit Room</a>
         </header>
 
         <div class="messages-window">
