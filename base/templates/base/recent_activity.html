@@ -1,5 +1,6 @@
 <div class="activity-feed">
     {% for message in room_messages %}
+        {% if message.room.private == False %}
     <div class="activity-item">
         <div class="activity-header">
             <a href="{% url 'user-profile' message.user.id %}" class="activity-user">
@@ -26,5 +27,6 @@
         </div>
         {% endif %}
     </div>
+        {% endif %}
     {% endfor %}
 </div>

@@ -18,6 +18,7 @@
             <a href="{% url 'room' r.id %}">{{ r.name }}</a>
         </h3>
         <p class="room-topic-tag">{{ r.topic.name }}</p>
+        <p class="room-status-tag">{% if r.private %} Private {% else %} Public {% endif %}</p>
     </div>
     
     <div class="room-card__footer">

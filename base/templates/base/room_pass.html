@@ -1,0 +1,24 @@
+{% extends "main.html" %}
+
+{% block content %}
+<div class="password-portal">
+    <div class="password-card">
+        <h2>Private Room</h2>
+        <p>This room is protected. Please enter the key.</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            
+            <input type="password" name="key" placeholder="Enter Password" required autofocus>
+            
+            <button type="submit" class="btn-verify">Unlock Room</button>
+        </form>
+
+        {% if error %}
+        <div class="error-msg">
+            {{ error }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock content %}

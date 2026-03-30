@@ -16,8 +16,43 @@
             {% csrf_token %}
             
             <div class="django-form-wrapper">
-                {{form.as_p}}
-            </div>
+
+    {{ form.name.label_tag }}
+    {{ form.name }}
+
+    {{ form.topic.label_tag }}
+    {{ form.topic }}
+
+    {{ form.description.label_tag }}
+    {{ form.description }}
+
+    <label>
+        Private Room:
+        {{ form.private }}
+    </label>
+
+    <div id="key-field">
+        {{ form.key.label_tag }}
+        {{ form.key }}
+    </div>
+
+</div>
+
+<script>
+const checkbox = document.getElementById('id_private');
+const keyField = document.getElementById('key-field');
+
+function toggleKeyField() {
+    if (checkbox.checked) {
+        keyField.style.display = 'block';
+    } else {
+        keyField.style.display = 'none';
+    }
+}
+
+checkbox.addEventListener('change', toggleKeyField);
+toggleKeyField();
+</script>
 
             <div class="settings-actions">
                 <button type="submit" class="btn btn-save">Save Changes</button>

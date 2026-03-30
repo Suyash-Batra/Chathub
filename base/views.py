@@ -1,137 +1,219 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
-from .models import Room, Topic, Message
+from django.views import View
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.decorators import login_required
-from .forms import RoomForm, UserForm, TopicForm
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
+from django.contrib.auth.hashers import check_password
+from django.urls import reverse_lazy
+from .models import Room, Topic, Message
+from .forms import RoomForm, UserForm, TopicForm
 
-@login_required(login_url = 'login')
-def createRoom(request):
-    form = RoomForm()
-    if request.method == 'POST':
-        form = RoomForm(request.POST)
-        if form.is_valid():
-            room = form.save(commit = False)
-            room.host = request.user
-            room.save()
-            return redirect('home')
-    context = {'form' : form}
-    return render(request, 'base/room_form.html', context)
-def home(request):
-    q = request.GET.get('q') if request.GET.get('q') != None else ''
-    rooms = Room.objects.filter(Q(topic__name__icontains = q) | Q(name__icontains=q) | Q(description__icontains = q))
-    topic = Topic.objects.all()
-    roomCount = rooms.count()
-    room_messages = Message.objects.filter(Q(room__topic__name__icontains=q))
-    context = {'rooms': rooms, 'topics': topic, 'roomcount': roomCount, 'room_messages': room_messages}
-    return render(request, 'base/home.html', context)
-def room(request, pk):
-    room = Room.objects.get(id=pk)
-    room_participants = room.participants.all()
-    room_messages = room.message_set.all().order_by('created')
-    if request.method =='POST':
-        message = Message.objects.create(
+class CreateRoomView(LoginRequiredMixin, CreateView):
+    model = Room
+    form_class = RoomForm
+    template_name = 'base/room_form.html'
+    login_url = 'login'
+
+    def form_valid(self, form):
+        room = form.save(commit=False)
+        room.host = self.request.user
+        room.save()
+        return redirect('home')
+
+class HomeView(ListView):
+    model = Room
+    template_name = 'base/home.html'
+    context_object_name = 'rooms'
+
+    def get_queryset(self):
+        q = self.request.GET.get('q') or ''
+        return Room.objects.filter(
+            Q(topic__name__icontains=q) |
+            Q(name__icontains=q) |
+            Q(description__icontains=q)
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        q = self.request.GET.get('q') or ''
+        rooms = context['rooms']
+
+        context['topics'] = Topic.objects.all()
+        context['roomcount'] = rooms.count()
+        context['room_messages'] = Message.objects.filter(
+            Q(room__topic__name__icontains=q)
+        ).order_by('-created')
+
+        return context
+
+from django.shortcuts import render, redirect
+from django.views import View
+from django.contrib.auth.hashers import check_password
+from .models import Room, Message
+
+
+class RoomView(View):
+    def get(self, request, pk):
+        room = Room.objects.get(id=pk)
+        if room.private:
+            if not request.session.get(f'room_{room.id}_access'):
+                return render(request, 'base/room_pass.html', {'room': room})
+        context = {
+            'room': room,
+            'room_messages': room.message_set.all().order_by('created'),
+            'participants': room.participants.all()
+        }
+        return render(request, 'base/room.html', context)
+
+    def post(self, request, pk):
+        room = Room.objects.get(id=pk)
+        if room.private and not request.session.get(f'room_{room.id}_access'):
+            entered_key = request.POST.get('key')
+            if not check_password(entered_key, room.key):
+                return render(request, 'base/room_pass.html', {
+                    'room': room,
+                    'error': 'Invalid password'
+                })
+            request.session[f'room_{room.id}_access'] = True
+            return redirect('room', pk=room.id)
+        Message.objects.create(
             user=request.user,
-            room = room,
-            body = request.POST.get('body'),
+            room=room,
+            body=request.POST.get('body')
         )
         room.participants.add(request.user)
         return redirect('room', pk=room.id)
-    context = {'room': room, 'room_messages': room_messages, 'participants': room_participants}
-    return render(request,'base/room.html', context)
-@login_required(login_url = 'login')
-def updateRoom(request, pk):
-    room = Room.objects.get(id=pk)
-    form = RoomForm(instance=room)
-    if request.user != room.host:
-        return HttpResponse('You are not the owner of the room')
-    if request.method == 'POST':
-        form = RoomForm(request.POST, instance=room)
-        if form.is_valid():
-            form.save()
+    
+class UpdateRoomView(LoginRequiredMixin, UpdateView):
+    model = Room
+    form_class = RoomForm
+    template_name = 'base/room_form.html'
+    login_url = 'login'
+    success_url = reverse_lazy('home')
+
+    def dispatch(self, request, *args, **kwargs):
+        room = self.get_object()
+        if request.user != room.host:
+            return HttpResponse('You are not the owner of the room')
+        return super().dispatch(request, *args, **kwargs)
+
+class DeleteRoomView(LoginRequiredMixin, DeleteView):
+    model = Room
+    template_name = 'base/delete.html'
+    login_url = 'login'
+    success_url = reverse_lazy('home')
+    context_object_name = "obj"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+        context["name"] = obj.name
+        return context
+    
+class LoginView(View):
+    def get(self, request):
+        if request.user.is_authenticated:
             return redirect('home')
-    context = {'form': form}
-    return render(request, 'base/room_form.html', context)
-@login_required(login_url = 'login')
-def deleteRoom(request, pk):
-    room = Room.objects.get(id = pk)
-    if request.method == 'POST':
-        room.delete()
-        return redirect('home')
-    return render(request, 'base/delete.html', {'obj': room})
-def loginPage(request):
-    page = 'login'
-    if request.user.is_authenticated:
-        return redirect('home')
-    if request.method == 'POST':
+        return render(request, 'base/login_register.html', {'page': 'login'})
+
+    def post(self, request):
         username = request.POST.get("username").lower()
         password = request.POST.get("pass")
+
         try:
-            user = User.objects.get(username=username)
+            User.objects.get(username=username)
         except:
             messages.error(request, "User dosent exist")
-        user= authenticate(request, username=username, password=password)
+
+        user = authenticate(request, username=username, password=password)
+
         if user is not None:
             login(request, user)
             return redirect('home')
         else:
             messages.error(request, "Wrong username or password")
-    context = {'page': page}
-    return render(request, 'base/login_register.html', context)
-def logoutUser(request):
-    logout(request)
-    return redirect('home')
-def registerUser(request):
-    form = UserCreationForm()
-    if request.method == 'POST':
+
+        return render(request, 'base/login_register.html', {'page': 'login'})
+
+class LogoutView(View):
+    def get(self, request):
+        logout(request)
+        return redirect('home')
+    
+class RegisterView(View):
+    def get(self, request):
+        form = UserCreationForm()
+        return render(request, 'base/login_register.html', {'form': form})
+
+    def post(self, request):
         form = UserCreationForm(request.POST)
+
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower()
             user.save()
             login(request, user)
-            return redirect ('home')
+            return redirect('home')
         else:
-            messages.error(request, 'An error occured while registration try a different username or check ur password')
-    context = {'form': form}
-    return render(request, 'base/login_register.html', context)
-@login_required(login_url = 'login')
-def deleteMessage(request, pk):
-    message = Message.objects.get(id=pk)
-    if request.method == 'POST':
-        message.delete()
-        return redirect('home')
-    return render(request, 'base/delete.html', {'obj': message.body})
-def userProfile(request, pk):
-    users = User.objects.get(id=pk)
-    rooms = users.room_set.all()
-    roomcount = rooms.count()
-    room_messages = users.message_set.all()
-    topics = Topic.objects.all()
-    context = {'users': users, 'rooms': rooms, 'room_messages': room_messages, 'topics': topics, 'roomcount': roomcount}
-    return render(request, 'base/profile.html', context)
-@login_required(login_url='login')
-def updateUser(request):
-    form = UserForm(instance=request.user)
-    if request.method == 'POST':
+            messages.error(request, 'An error occured while registration')
+
+        return render(request, 'base/login_register.html', {'form': form})
+
+class DeleteMessageView(LoginRequiredMixin, DeleteView):
+    model = Message
+    template_name = 'base/delete.html'
+    login_url = 'login'
+    success_url = reverse_lazy('home')
+    context_object_name = "obj"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        obj = self.get_object()
+        context["name"] = obj.body
+        return context
+    
+
+class UserProfileView(View):
+    def get(self, request, pk):
+        user = User.objects.get(id=pk)
+        rooms = user.room_set.all()
+
+        context = {
+            'users': user,
+            'rooms': rooms,
+            'room_messages': user.message_set.all(),
+            'topics': Topic.objects.all(),
+            'roomcount': rooms.count()
+        }
+
+        return render(request, 'base/profile.html', context)
+
+class UpdateUserView(LoginRequiredMixin, View):
+    def get(self, request):
+        form = UserForm(instance=request.user)
+        return render(request, 'base/update_user.html', {'form': form})
+
+    def post(self, request):
         form = UserForm(request.POST, instance=request.user)
+
         if form.is_valid():
             form.save()
             return redirect('user-profile', pk=request.user.id)
-    context = {'form': form}
-    return render(request, 'base/update_user.html', context)
-@login_required(login_url='login')
-def addTopic(request):
-    form = TopicForm()
-    if request.method == 'POST':
-        form = TopicForm(request.POST)
-        if form.is_valid():
-            room = form.save()
-            return redirect('home')
-    context = {'form' : form}
-    return render(request, 'base/room_form.html', context)
-    
+
+        return render(request, 'base/update_user.html', {'form': form})
+
+class AddTopicView(LoginRequiredMixin, CreateView):
+    model = Topic
+    form_class = TopicForm
+    template_name = 'base/room_form.html'
+    login_url = 'login'
+
+    def form_valid(self, form):
+        form.save()
+        return redirect('home')
+
