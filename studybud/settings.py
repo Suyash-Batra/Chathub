@@ -67,9 +67,16 @@ DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        ssl_require=True if os.environ.get('DATABASE_URL') and 'ssl-mode' not in os.environ.get('DATABASE_URL') else False
     )
 }
+
+# If using MySQL/TiDB, we often need to force the SSL context
+if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
+    DATABASES['default']['OPTIONS'] = {
+        'ssl': {
+            'ca': os.environ.get('MYSQL_ATTR_SSL_CA', '/etc/ssl/certs/ca-certificates.crt')
+        }
+    }
 
 # 5. Redis & Channels (Upstash)
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
