@@ -62,7 +62,6 @@ TEMPLATES = [
     },
 ]
 
-# 4. Database (TiDB Cloud)
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -70,13 +69,23 @@ DATABASES = {
     )
 }
 
-# If using MySQL/TiDB, we often need to force the SSL context
-if DATABASES['default']['ENGINE'] == 'django.db.backends.mysql':
-    DATABASES['default']['OPTIONS'] = {
-        'ssl': {
-            'ca': os.environ.get('MYSQL_ATTR_SSL_CA', '/etc/ssl/certs/ca-certificates.crt')
-        }
-    }
+# Only apply the Linux-specific SSL path if we are NOT on Windows
+if DATABASES['default'].get('ENGINE') == 'django.db.backends.mysql':
+    # If DATABASE_URL is present (usually on Render)
+    if os.environ.get('DATABASE_URL'):
+        # On Render/Linux, we need the CA path
+        if os.name != 'nt':  # 'nt' means Windows
+            DATABASES['default']['OPTIONS'] = {
+                'ssl': {
+                    'ca': '/etc/ssl/certs/ca-certificates.crt'
+                }
+            }
+        else:
+            # On Windows locally, TiDB usually works without the explicit 'ca' path
+            # if your system certificates are up to date.
+            DATABASES['default']['OPTIONS'] = {
+                'ssl': {}
+            }
 
 # 5. Redis & Channels (Upstash)
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/1')
