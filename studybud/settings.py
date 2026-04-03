@@ -29,7 +29,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'encrypted_model_fields',
     'channels',
-    'django_celery_beat',
+    # 'django_celery_beat',
     'corsheaders',
 ]
 
