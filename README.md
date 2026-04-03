@@ -78,16 +78,15 @@
 
 ---
 
-🌐 Live Demo & Deployment Notes
-Live Link: https://chathub-72tx.onrender.com
+## 🌐 Live Demo & Deployment Notes
 
-⚠️ Important Note on Media Files (Images/Uploads)
-While the application supports full image and file transitions locally, the live demo has specific limitations due to the Render Free Tier infrastructure:
+**Live Link:** [https://chathub-72tx.onrender.com](https://chathub-72tx.onrender.com)
 
-Local Environment: Files and images work perfectly as they are stored on your local persistent disk.
+### ⚠️ Important Note on Media Files (Images/Uploads)
 
-Live Production: Render uses an ephemeral file system. This means any file uploaded to the chat-files/ directory is wiped immediately whenever the instance restarts or a new deployment occurs.
+While the application supports full image and file transitions **locally**, the live demo has specific limitations due to the **Render Free Tier** infrastructure:
 
-No 24-Hour Persistence: Unlike some "temporary" hosting, the Free Tier does not guarantee even short-term persistence (like 24 hours) for local media storage.
-
-Database Persistence: All text-based data (Rooms, Messages, Users, and Topics) is 100% persistent as it is hosted on a separate TiDB Cloud cluster.
+* **Local Environment:** Files and images work perfectly as they are stored on your local persistent disk.
+* **Live Production:** Render uses an **ephemeral file system**. This means any file uploaded to the `chat-files/` directory is wiped immediately whenever the instance restarts or a new deployment occurs. 
+* **No 24-Hour Persistence:** Unlike some "temporary" hosting, the Free Tier does not guarantee even short-term persistence (like 24 hours) for local media storage.
+* **Database Persistence:** All text-based data (Rooms, Messages, Users, and Topics) is **100% persistent** as it is hosted on a separate **TiDB Cloud** cluster.
