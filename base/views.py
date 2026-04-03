@@ -1,4 +1,5 @@
-from django.shortcuts import render, redirect
+import os
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
@@ -9,9 +10,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from .models import Room, Topic, Message
 from .forms import RoomForm, UserForm, TopicForm
+from django.http import JsonResponse
 
 class CreateRoomView(LoginRequiredMixin, CreateView):
     model = Room
@@ -50,12 +52,6 @@ class HomeView(ListView):
         ).order_by('-created')
 
         return context
-
-from django.shortcuts import render, redirect
-from django.views import View
-from django.contrib.auth.hashers import check_password
-from .models import Room, Message
-
 
 class RoomView(View):
     def get(self, request, pk):
@@ -168,8 +164,11 @@ class DeleteMessageView(LoginRequiredMixin, DeleteView):
     model = Message
     template_name = 'base/delete.html'
     login_url = 'login'
-    success_url = reverse_lazy('home')
     context_object_name = "obj"
+    
+    def get_success_url(self):
+        obj = self.get_object()
+        return reverse('room', kwargs={'pk': obj.room.id})
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -177,7 +176,6 @@ class DeleteMessageView(LoginRequiredMixin, DeleteView):
         context["name"] = obj.body
         return context
     
-
 class UserProfileView(View):
     def get(self, request, pk):
         user = User.objects.get(id=pk)
@@ -217,3 +215,40 @@ class AddTopicView(LoginRequiredMixin, CreateView):
         form.save()
         return redirect('home')
 
+class VoiceUploadView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        room = get_object_or_404(Room, id=pk)
+        audio = request.FILES.get('audio')
+        if audio:
+            msg = Message.objects.create(user=request.user, room=room, audio_file=audio, body="Voice Message")
+            return JsonResponse({'id': msg.id, 'audio_url': msg.audio_file.url, 'user': request.user.username, 'user_id': request.user.id})
+        return JsonResponse({'error': 'No audio'}, status=400)
+
+class FileUploadView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        try:
+            room = get_object_or_404(Room, id=pk)
+            file = request.FILES.get('file')
+            if not file:
+                return JsonResponse({'error': 'No file provided'}, status=400)
+            ext = os.path.splitext(file.name)[1].lower()
+            valid_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+            is_img = ext in valid_extensions
+            msg = Message.objects.create(
+                user=request.user, 
+                room=room, 
+                message_file=file, 
+                is_image=is_img, 
+                body=f"File: {file.name}"
+            )
+
+            return JsonResponse({
+                'id': msg.id, 
+                'file_url': msg.message_file.url, 
+                'is_image': is_img, 
+                'user': request.user.username, 
+                'user_id': request.user.id
+            })
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)

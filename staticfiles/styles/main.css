@@ -1,0 +1,1351 @@
+:root {
+    --bg-main: #f0f2f5;        /* Light grey-blue background */
+    --surface: #ffffff;        /* White for chat cards */
+    --primary: #5865f2;        /* Trustworthy "Chat" blue */
+    --primary-hover: #4752c4;
+    --text-dark: #1e1f22;
+    --text-muted: #5c5e66;
+    --border: #e3e5e8;
+    --shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-dark);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Navbar */
+.navbar {
+    background: var(--surface);
+    height: 65px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+}
+
+.nav-content {
+    width: 95%;
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.logo {
+    font-weight: 800;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+}
+
+.logo span {
+    color: var(--primary);
+}
+
+.search-bar input {
+    background: var(--bg-main);
+    border: 1px solid transparent;
+    padding: 8px 16px;
+    border-radius: 8px;
+    width: 250px;
+    transition: 0.2s;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface);
+    width: 300px;
+}
+
+/* User Actions */
+.user-tag {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.nav-link {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.nav-btn {
+    text-decoration: none;
+    padding: 8px 18px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+
+.login-btn {
+    background: var(--primary);
+    color: white;
+}
+
+.logout-btn {
+    background: #fee7e7;
+    color: #da373c;
+}
+
+/* Layout */
+.main-wrapper {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* Toast Messages */
+.toast-container {
+    margin-bottom: 20px;
+}
+
+.toast {
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--surface);
+    border-left: 5px solid var(--primary);
+    box-shadow: var(--shadow);
+    margin-bottom: 10px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .search-bar { display: none; }
+    .nav-content { width: 100%; padding: 0 15px; }
+}
+
+/* Home Page Layout */
+.home-container {
+    display: grid;
+    grid-template-columns: 250px 1fr 300px;
+    gap: 24px;
+    align-items: start;
+}
+
+/* Sidebar Styling */
+.sidebar-title {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.topic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.topic-item {
+    text-decoration: none;
+    color: var(--text-muted);
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    display: flex;
+    justify-content: space-between;
+    transition: 0.2s;
+}
+
+.topic-item:hover, .topic-item.active {
+    background: var(--surface);
+    color: var(--primary);
+    box-shadow: var(--shadow);
+}
+
+.topic-item span {
+    background: var(--bg-main);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+}
+
+/* Feed Styling */
+.feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.feed-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+/* Utility */
+.text-muted {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+/* Responsive Grid */
+@media (max-width: 1100px) {
+    .home-container {
+        grid-template-columns: 200px 1fr; /* Hide activity sidebar on tablets */
+    }
+    .activity-sidebar { display: none; }
+}
+
+@media (max-width: 768px) {
+    .home-container {
+        grid-template-columns: 1fr; /* Stack everything on mobile */
+    }
+    .topics-sidebar { display: none; }
+}
+
+/* Feed Card Styling */
+.room-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.room-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.room-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.room-author {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    background: #e3e5e8;
+    border-radius: 50%;
+}
+
+.room-title a {
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.room-topic-tag, .room-status-tag {
+    display: inline-block;
+    background: var(--bg-main);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    margin-top: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.room-status-tag {
+    background-color:#4752c4;
+    color: white;
+}
+
+/* Action Buttons (Edit/Delete) */
+.room-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.action-link {
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.action-link.edit {
+    color: var(--primary);
+    background: #eef0ff;
+}
+
+.action-link.delete {
+    color: #da373c;
+    background: #fee7e7;
+}
+
+.room-card__footer {
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    padding-top: 15px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-join {
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.btn-join:hover {
+    text-decoration: underline;
+}
+
+/* Recent Activity Sidebar */
+.activity-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.activity-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    transition: 0.2s;
+}
+
+.activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.activity-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.avatar-xs {
+    width: 20px;
+    height: 20px;
+    background: #e3e5e8;
+    border-radius: 50%;
+}
+
+.activity-time {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.activity-room-name {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.activity-room-name a {
+    color: var(--text-dark);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.activity-message {
+    background: var(--bg-main);
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--text-dark);
+    line-height: 1.4;
+    border-left: 3px solid var(--border);
+}
+
+/* Delete Action in Sidebar */
+.activity-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.delete-icon {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    color: #da373c;
+    font-size: 0.75rem;
+    font-weight: 600;
+    opacity: 0.7;
+    transition: 0.2s;
+}
+
+.delete-icon:hover {
+    opacity: 1;
+}   
+
+/* 1. Main Layout Proportions */
+.home-container {
+    display: grid;
+    /* 250px left, fluid middle, 320px right */
+    grid-template-columns: 250px 1fr 320px; 
+    gap: 30px;
+    align-items: start;
+    margin-top: 2rem;
+}
+
+/* 2. Sticky Behavior (Keeps sidebars in view) */
+.topics-sidebar, 
+.activity-sidebar {
+    position: sticky;
+    top: 90px; /* Adjust based on your navbar height */
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-bottom: 20px;
+}
+
+/* Hide scrollbars for a cleaner look while keeping scroll functionality */
+.topics-sidebar::-webkit-scrollbar,
+.activity-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+.topics-sidebar::-webkit-scrollbar-thumb,
+.activity-sidebar::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 10px;
+}
+
+/* 3. Center Feed Proportions */
+.feed-section {
+    min-width: 0; /* Prevents flex/grid items from breaking layout with long text */
+}
+
+/* 4. Refined Component Spacing */
+.sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.feed-header {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow);
+}
+
+/* 5. Responsive Breakpoints */
+/* Tablets: Hide the Activity Sidebar first */
+@media (max-width: 1100px) {
+    .home-container {
+        grid-template-columns: 220px 1fr;
+    }
+    .activity-sidebar {
+        display: none;
+    }
+}
+
+/* Mobile: Single Column */
+@media (max-width: 768px) {
+    .home-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .topics-sidebar {
+        position: relative;
+        top: 0;
+        height: auto;
+        order: 2; /* Put topics below the feed on mobile if desired */
+    }
+
+    .feed-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+}
+
+/* Delete Confirmation Page */
+.delete-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 60vh;
+}
+
+.delete-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 100%;
+    max-width: 450px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.delete-card__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.delete-card__header h3 {
+    color: #da373c;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.delete-card__body {
+    margin-bottom: 30px;
+    color: var(--text-dark);
+}
+
+.warning-text {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Actions Styles */
+.delete-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.btn-cancel {
+    background: var(--bg-main);
+    color: var(--text-dark);
+    text-decoration: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+    border: 1px solid var(--border);
+    transition: 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #e3e5e8;
+}
+
+.btn-delete {
+    background: #da373c;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    flex: 1;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-delete:hover {
+    background: #bc2f33;
+    box-shadow: 0 4px 12px rgba(218, 55, 60, 0.2);
+}
+
+/* Auth Pages (Login/Register) */
+.auth-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    padding: 40px;
+    box-shadow: var(--shadow);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.auth-header h2 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin-bottom: 8px;
+}
+
+.auth-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Form Styling */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="password"],
+.form-django input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.auth-form input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.1);
+}
+
+/* Django Form Adjustment */
+.form-django p {
+    margin-bottom: 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.btn-auth {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: 0.2s;
+    margin-top: 10px;
+}
+
+.btn-auth:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+}
+
+.auth-footer {
+    margin-top: 25px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.auth-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Refined Profile Header (No Avatar) */
+.profile-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
+}
+
+.profile-username {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -0.5px;
+}
+
+/* Three-Column Grid for Profile */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 250px 1fr 320px;
+    gap: 30px;
+    align-items: start;
+}
+
+/* Reusing Home Sidebar styles for consistency */
+.topic-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.topic-item {
+    text-decoration: none;
+    color: var(--text-muted);
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.topic-item:hover {
+    background: var(--bg-main);
+    color: var(--primary);
+}
+
+/* Badge for count */
+.badge {
+    background: var(--bg-main);
+    color: var(--primary);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid var(--border);
+}
+
+/* Tablet & Mobile Adjustments */
+@media (max-width: 1100px) {
+    .profile-grid {
+        grid-template-columns: 220px 1fr;
+    }
+    .activity-sidebar { display: none; }
+}
+
+@media (max-width: 768px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    .topics-sidebar { display: none; }
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+}
+
+/* Settings / Update User Page */
+.settings-page {
+    display: flex;
+    justify-content: center;
+    padding: 2rem 0;
+}
+
+.settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 550px;
+    padding: 40px;
+    box-shadow: var(--shadow);
+}
+
+.settings-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    transition: 0.2s;
+}
+
+.back-link:hover {
+    gap: 5px; /* Subtle arrow animation */
+}
+
+.settings-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.settings-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+/* Styling the Django as_p output */
+.django-form-wrapper p {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.django-form-wrapper label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: capitalize;
+}
+
+.django-form-wrapper input, 
+.django-form-wrapper textarea, 
+.django-form-wrapper select {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.django-form-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: var(--surface);
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.1);
+}
+
+.settings-actions {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-save {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-save:hover {
+    background: var(--primary-hover);
+    box-shadow: 0 4px 15px rgba(88, 101, 242, 0.3);
+}
+
+/* --- Room Layout --- */
+.room-container {
+    display: grid;
+    /* Left: 220px | Middle: Fluid | Right: 320px */
+    grid-template-columns: 220px 1fr 320px;
+    gap: 20px;
+    height: calc(100vh - 100px); /* Keeps it within viewable area */
+    align-items: stretch;
+    margin-top: 1rem;
+}
+
+/* --- Sidebars (Participants & Activity) --- */
+.participants-sidebar, 
+.activity-sidebar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    height: fit-content;
+    position: sticky;
+    top: 80px;
+}
+
+.participant-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--text-dark);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.participant-item:hover {
+    color: var(--primary);
+}
+
+.avatar-xs {
+    width: 24px;
+    height: 24px;
+    background: var(--bg-main);
+    border-radius: 50%;
+}
+
+/* --- Chat Main Section --- */
+.chat-main {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden; /* Clips the message window */
+}
+
+.chat-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface);
+}
+
+.chat-header h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.btn-back {
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.btn-back:hover {
+    background: var(--bg-main);
+}
+
+/* --- Messages Window --- */
+.messages-window {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #ffffff; /* Contrast against the main background */
+    display: flex;
+    flex-direction: column;
+}
+
+.messages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.message-item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 75%;
+}
+
+.message-item--me {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.message-meta {
+    font-size: 0.7rem;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+}
+
+.message-meta a {
+    text-decoration: none;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* --- Chat Bubbles --- */
+.message-bubble {
+    padding: 10px 14px;
+    border-radius: 15px;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    font-size: 0.95rem;
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom-left-radius: 2px; /* Chat tail left */
+}
+
+.message-item--me .message-bubble {
+    background: var(--primary);
+    color: white;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 2px; /* Chat tail right */
+}
+
+.message-bubble p {
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* --- Delete Button --- */
+.msg-delete {
+    color: inherit; /* White on blue bubbles, grey on others */
+    opacity: 0.3;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    margin-top: 2px;
+}
+
+.message-bubble:hover .msg-delete {
+    opacity: 1;
+}
+
+.msg-delete:hover {
+    color: #ff4d4d !important;
+}
+
+/* --- Input Area --- */
+.chat-input-area {
+    padding: 20px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+}
+
+.chat-form {
+    display: flex;
+    gap: 10px;
+}
+
+.chat-form input {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    font-family: inherit;
+    font-size: 0.95rem;
+}
+
+.chat-form input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+}
+
+.chat-form button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 0 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.chat-form button:hover {
+    background: var(--primary-hover);
+}
+
+/* --- Responsive Layout --- */
+@media (max-width: 1100px) {
+    .room-container {
+        grid-template-columns: 200px 1fr;
+    }
+    .activity-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .room-container {
+        grid-template-columns: 1fr;
+    }
+    .participants-sidebar {
+        display: none;
+    }
+}
+
+/* Settings Page Layout */
+.settings-page {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem;
+}
+
+.settings-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    padding: 40px;
+    box-shadow: var(--shadow);
+}
+
+.settings-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.settings-header h2 {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.settings-header p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+/* Form Groups */
+.form-body {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+/* Styling Django Inputs */
+.form-input-wrapper input, 
+.form-input-wrapper textarea, 
+.form-input-wrapper select {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-main);
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: 0.2s;
+}
+
+.form-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.1);
+}
+
+/* Errors */
+.form-error {
+    color: #da373c;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* Action Button */
+.form-actions {
+    margin-top: 30px;
+}
+
+.btn-save {
+    background: var(--primary);
+    color: white;
+    border: none;
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-save:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(88, 101, 242, 0.2);
+}
+
+.password-portal {
+        display: flex;
+        justify-content: center; /* Horizontal center */
+        align-items: center;     /* Vertical center */
+        width: 100%;
+        min-height: 80vh;        /* Uses 80% of the screen height to push it down from the top */
+        padding: 20px;
+    }
+
+    /* 2. The Card: Professional Blue Theme (#5865F2) */
+    .password-card {
+        background: #ffffff; /* --surface */
+        border: 1px solid #e3e5e8; /* --border */
+        border-radius: 16px;
+        width: 100%;
+        max-width: 400px;
+        padding: 40px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); /* --shadow */
+        text-align: center;
+    }
+
+    .password-card h2 {
+        color: #1e1f22; /* --text-dark */
+        font-family: 'Inter', sans-serif;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .password-card p {
+        color: #5c5e66; /* --text-muted */
+        font-size: 0.9rem;
+        margin-bottom: 25px;
+    }
+
+    /* 3. Input Styling */
+    .password-card input[type="password"] {
+        width: 100%;
+        padding: 12px 16px;
+        border-radius: 8px;
+        border: 1px solid #e3e5e8;
+        background: #F0F2F5; /* --bg-main */
+        font-size: 1rem;
+        margin-bottom: 20px;
+        outline: none;
+        text-align: center;
+    }
+
+    .password-card input[type="password"]:focus {
+        border-color: #5865F2; /* --primary */
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(88, 101, 242, 0.1);
+    }
+
+    /* 4. Button Styling */
+    .btn-verify {
+        width: 100%;
+        background-color: #5865F2; /* --primary */
+        color: white;
+        border: none;
+        padding: 14px;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-verify:hover {
+        background-color: #4752c4; /* --primary-hover */
+        transform: translateY(-1px);
+    }
+
+    /* 5. Error Message Red */
+    .error-msg {
+        margin-top: 15px;
+        padding: 12px;
+        background: #fee7e7;
+        color: #da373c;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }

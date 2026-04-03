@@ -1,66 +1,418 @@
-{% extends "main.html" %} 
-{% block content %}
+{% extends "main.html" %} {% block content %}
+
+<style>
+  .chat-form {
+    background-color: var(--color-dark-medium);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--color-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    height: 35px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .btn-icon:hover {
+    background: rgba(113, 122, 235, 0.1);
+  }
+
+  #message-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-light);
+    flex: 1;
+    font-size: 15px;
+  }
+
+  .btn-submit {
+    background-color: var(--color-main);
+    color: white;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 5px;
+    height: 35px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* Fix message bubble spacing for delete button */
+  .message-bubble {
+    position: relative;
+    padding-right: 30px !important;
+  }
+
+  .msg-delete {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    opacity: 0.5;
+  }
+
+  .msg-delete:hover {
+    opacity: 1;
+    color: #ff4757;
+  }
+</style>
 
 <div class="room-container">
-    <aside class="participants-sidebar">
-        <h3 class="sidebar-title">Participants <span>({{participants.count}})</span></h3>
-        <div class="participant-list">
-            {% for p in participants %}
-            <a href="{% url 'user-profile' p.id %}" class="participant-item">
-                <span>@{{p.username}}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </aside>
-
-    <section class="chat-main">
-        <header class="chat-header">
-            <div class="chat-header__info">
-                <h1>{{ room.name }}</h1>
-                <p class="text-muted">{{ room.description|default:"No description provided." }}</p>
-            </div>
-        </header>
-
-        <div class="messages-window">
-<div class="messages-list">
-    {% for message in room_messages %}
-    <div class="message-item {% if request.user == message.user %}message-item--me{% endif %}">
-        <div class="message-meta">
-            <a href="{% url 'user-profile' message.user.id %}">@{{message.user}}</a>
-            <small>{{message.created|timesince}} ago</small>
-        </div>
-        <div class="message-bubble">
-            <p>{{message.body}}</p>
-            {% if request.user == message.user %}
-            <a href="{% url 'delete-message' message.id %}" class="msg-delete" title="Delete message">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </a>
-            {% endif %}
-        </div>
+  <aside class="participants-sidebar">
+    <h3 class="sidebar-title">
+      Participants <span>({{participants.count}})</span>
+    </h3>
+    <div class="participant-list" id="participant-side-list">
+      {% for p in participants %}
+      <a href="{% url 'user-profile' p.id %}" class="participant-item">
+        <span>@{{p.username}}</span>
+      </a>
+      {% endfor %}
     </div>
-    {% empty %}
-    <div class="empty-chat">No messages yet. Start the conversation!</div>
-    {% endfor %}
-</div>
-        </div>
+  </aside>
 
-        <div class="chat-input-area">
-            {% if request.user.is_authenticated %}
-            <form action="" method="POST" class="chat-form">
-                {% csrf_token %}
-                <input type="text" name="body" placeholder="Message #{{room.name}}" required autocomplete="off">
-                <button type="submit">Send</button>
-            </form>
+  <section class="chat-main">
+    <header class="chat-header">
+      <div class="chat-header__info">
+        <h1>{{ room.name }}</h1>
+        <p class="text-muted">
+          {{ room.description|default:"No description provided." }}
+        </p>
+      </div>
+    </header>
+
+    <div class="messages-window">
+      <div class="messages-list" id="chat-box">
+        {% for message in room_messages %}
+        <div
+          class="message-item {% if request.user == message.user %}message-item--me{% endif %}"
+        >
+          <div class="message-meta">
+            <a href="{% url 'user-profile' message.user.id %}"
+              >@{{message.user}}</a
+            >
+            <small>{{message.created|timesince}} ago</small>
+          </div>
+          <div class="message-bubble">
+            {% if message.audio_file %}
+            <audio
+              controls
+              src="{{message.audio_file.url}}"
+              style="height: 30px"
+            ></audio>
+            {% elif message.message_file %} {% if message.is_image %}
+            <img
+              src="{{message.message_file.url}}"
+              style="
+                max-width: 250px;
+                border-radius: 8px;
+                cursor: pointer;
+                display: block;
+              "
+              onclick="window.open(this.src)"
+            />
             {% else %}
-            <p class="auth-notice">Please <a href="{% url 'login' %}">Login</a> to participate in the chat.</p>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path
+                  d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"
+                ></path>
+                <polyline points="13 2 13 9 20 9"></polyline>
+              </svg>
+              <a
+                href="{{message.message_file.url}}"
+                target="_blank"
+                style="
+                  color: inherit;
+                  text-decoration: underline;
+                  font-size: 13px;
+                "
+                >Download File</a
+              >
+            </div>
+            {% endif %} {% else %}
+            <p>{{message.body}}</p>
+            {% endif %} {% if request.user == message.user %}
+            <a href="{% url 'delete-message' message.id %}" class="msg-delete">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+              >
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path
+                  d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                ></path>
+              </svg>
+            </a>
             {% endif %}
+          </div>
         </div>
-    </section>
+        {% empty %}
+        <div class="empty-chat">No messages yet.</div>
+        {% endfor %}
+      </div>
+    </div>
 
-    <aside class="activity-sidebar">
-        <h3 class="sidebar-title">Global Activity</h3>
-        {% include "base/recent_activity.html" %}
-    </aside>
+    <div class="chat-input-area" style="padding: 15px">
+      {% if request.user.is_authenticated %}
+      <form id="chat-form" class="chat-form">
+        {% csrf_token %}
+
+        <button
+          type="button"
+          id="file-btn"
+          class="btn-icon"
+          title="Upload File"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+            ></path>
+          </svg>
+        </button>
+        <input type="file" id="file-input" style="display: none" />
+
+        <button
+          type="button"
+          id="record-btn"
+          class="btn-icon"
+          title="Record Voice"
+        >
+          <svg
+            id="mic-icon"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"
+            ></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </button>
+
+        <input
+          id="message-input"
+          type="text"
+          placeholder="Message #{{room.name}}"
+          required
+          autocomplete="off"
+        />
+        <button type="submit" class="btn-submit">Send</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
 </div>
 
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const roomId = "{{ room.id }}";
+    const currentUser = "{{ request.user.username }}";
+    const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+    const socket = new WebSocket(
+      protocol + window.location.host + "/ws/chat/" + roomId + "/",
+    );
+
+    const chatBox = document.getElementById("chat-box");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message-input");
+    const recordBtn = document.getElementById("record-btn");
+    const micIcon = document.getElementById("mic-icon");
+    const fileBtn = document.getElementById("file-btn");
+    const fileInput = document.getElementById("file-input");
+
+    let mediaRecorder;
+    let audioChunks = [];
+
+    // Helper function to scroll to bottom
+    const scrollToBottom = () => {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    // Scroll on initial load
+    scrollToBottom();
+
+    // --- VOICE RECORDING ---
+    recordBtn.addEventListener("click", async () => {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+          });
+          const supportedType = ["audio/webm", "audio/mp4", "audio/ogg"].find(
+            (t) => MediaRecorder.isTypeSupported(t),
+          );
+
+          mediaRecorder = new MediaRecorder(stream, {
+            mimeType: supportedType,
+          });
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach((track) => track.stop());
+            const audioBlob = new Blob(audioChunks, { type: supportedType });
+            const formData = new FormData();
+            formData.append("audio", audioBlob, "voice.webm");
+
+            const resp = await fetch(`/upload-voice/${roomId}/`, {
+              method: "POST",
+              headers: {
+                "X-CSRFToken": document.querySelector(
+                  "[name=csrfmiddlewaretoken]",
+                ).value,
+              },
+              body: formData,
+            });
+            const data = await resp.json();
+            if (data.audio_url) {
+              socket.send(
+                JSON.stringify({
+                  message: "",
+                  audio_url: data.audio_url,
+                  file_url: null,
+                  id: data.id,
+                }),
+              );
+            }
+          };
+          mediaRecorder.start();
+          micIcon.style.stroke = "red";
+        } catch (err) {
+          alert("Mic access denied");
+        }
+      } else {
+        mediaRecorder.stop();
+        micIcon.style.stroke = "currentColor";
+      }
+    });
+
+    // --- FILE UPLOAD ---
+    fileBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async () => {
+      if (fileInput.files.length === 0) return;
+      fileBtn.innerHTML = "...";
+      const formData = new FormData();
+      formData.append("file", fileInput.files[0]);
+
+      try {
+        const resp = await fetch(`/upload-file/${roomId}/`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]")
+              .value,
+          },
+          body: formData,
+        });
+        const data = await resp.json();
+        if (data.file_url) {
+          socket.send(
+            JSON.stringify({
+              message: "",
+              file_url: data.file_url,
+              audio_url: null,
+              is_image: data.is_image,
+              id: data.id,
+            }),
+          );
+        }
+      } catch (err) {
+        console.error(err);
+      }
+      fileBtn.innerHTML =
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>';
+      fileInput.value = "";
+    });
+
+    // --- RECEIVE MESSAGES ---
+    socket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      const emptyChat = document.querySelector(".empty-chat");
+      if (emptyChat) emptyChat.remove();
+
+      // Check if user is scrolled near the bottom before adding new message
+      const isAtBottom = (chatBox.scrollHeight - chatBox.scrollTop - chatBox.clientHeight) < 150;
+
+      const isMeClass = data.user === currentUser ? "message-item--me" : "";
+      let content = "";
+
+      if (data.audio_url) {
+        content = `<audio controls src="${data.audio_url}?t=${new Date().getTime()}" style="height:30px;"></audio>`;
+      } else if (data.file_url) {
+        if (data.is_image) {
+          // Add onload to images so we scroll again once the image height is known
+          content = `<img src="${data.file_url}" style="max-width: 250px; border-radius: 8px; display:block;" onload="this.closest('.messages-list').scrollTop = this.closest('.messages-list').scrollHeight;">`;
+        } else {
+          content = `<div style="display: flex; align-items: center; gap: 8px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg><a href="${data.file_url}" target="_blank" style="color: inherit; text-decoration: underline; font-size:13px;">Download File</a></div>`;
+        }
+      } else {
+        content = `<p>${data.message}</p>`;
+      }
+
+      let deleteBtn =
+        data.user === currentUser
+          ? `<a href="/delete-message/${data.id}/" class="msg-delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></a>`
+          : "";
+
+      const html = `<div class="message-item ${isMeClass}">
+                        <div class="message-meta"><a href="/profile/${data.user_id}/">@${data.user}</a><small>Just now</small></div>
+                        <div class="message-bubble">${content}${deleteBtn}</div>
+                      </div>`;
+
+      chatBox.insertAdjacentHTML("beforeend", html);
+
+      // Scroll down if they were already at the bottom or if it's their own message
+      if (isAtBottom || data.user === currentUser) {
+        scrollToBottom();
+      }
+    };
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (input.value.trim() === "") return;
+      socket.send(
+        JSON.stringify({
+          message: input.value,
+          audio_url: null,
+          file_url: null,
+        }),
+      );
+      input.value = "";
+    });
+  });
+</script>
 {% endblock %}
