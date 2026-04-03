@@ -12,8 +12,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-fallback-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Splits the string 'site1.com,site2.com' into a list
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+CSRF_TRUSTED_ORIGINS = [
+    'https://chathub-72tx.onrender.com',
+]
+
+# While you're at it, ensure your Render URL is also in ALLOWED_HOSTS
+ALLOWED_HOSTS = [
+    'chathub-72tx.onrender.com',
+    'localhost',
+    '127.0.0.1',
+]
 
 # 3. Application definition
 INSTALLED_APPS = [
