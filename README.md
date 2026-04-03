@@ -1,31 +1,35 @@
 # ChatHub 💬
 
-**ChatHub** is a streamlined, responsive web application designed for organized group discussions. Built with **Django**, it allows users to discover, create, and participate in chat rooms categorized by specific interests and topics.
+**ChatHub** is a high-performance, real-time web application designed for organized group discussions. Originally built as a Django prototype, it has been scaled into a production-ready platform featuring live messaging and cloud-native architecture.
 
-## ✨ Core Features
+## ✨ New & Advanced Features
 
+* **Real-Time Messaging (WebSockets):** Instant message delivery and room updates without page refreshes, powered by Django Channels.
+* **Production Deployment:** Fully hosted on **Render** with automated CI/CD pipelines.
+* **Cloud Database Integration:** Migrated from SQLite to **TiDB (MySQL-compatible)** for scalable, distributed data storage with SSL encryption.
+* **Global Activity Feed:** A live sidebar that keeps you updated on the latest messages across the entire platform.
+* **Voice & Media Ready:** Infrastructure support for voice messaging and file uploads (via Cloudinary integration).
+* **Secure Authentication:** Enhanced security with CSRF protection, secure environment variables, and encrypted model fields.
 * **Dynamic Room Discovery:** Browse rooms by topic or use the global search to find discussions by name or description.
-* **Flexible Topic Management:** Select from a curated list of existing topics or instantly create a new one while setting up a room.
-* **Intuitive Messaging UI:** A clean, bubble-based chat interface that distinguishes between your messages and others for a natural conversation flow.
-* **User Profiles:** Dedicated pages for every user showing their hosted rooms and recent activity feed.
-* **Participation Tracking:** See a live list of active participants within any chat room.
-* **Recent Activity:** A global sidebar that keeps you updated on the latest messages across the entire platform.
-* **Responsive Design:** A mobile-first approach ensuring the chat experience is seamless on phones, tablets, and desktops.
 
 ## 🛠️ Technical Stack
 
-* **Backend:** Python / Django
-* **Frontend:** HTML5, CSS3 (Flexbox & Grid), JavaScript
-* **Database:** SQLite (Default) / Compatible with PostgreSQL & MySQL
-* **Authentication:** Django's robust User Authentication system (Login, Logout, Register).
+* **Backend:** Python 3.14 / Django 5.2
+* **Asynchronous Engine:** **Daphne** (ASGI) & **Django Channels**
+* **Real-Time Layer:** **Redis** (via Upstash) for WebSocket layering and task queuing.
+* **Database:** **TiDB Cloud** (MySQL) with server-side SSL certificates.
+* **Static/Media Hosting:** **WhiteNoise** for optimized static delivery; Cloudinary-ready for media.
+* **Task Queue:** **Celery** integration for background processing (Optional/Development).
+* **Frontend:** HTML5, CSS3 (Custom Flexbox/Grid), JavaScript (WebSockets).
 
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
-* Python 3.8 or higher
-* pip (Python package manager)
+* Python 3.10 or higher
+* Redis Server (or Upstash account)
+* TiDB / MySQL Database
 
 ### Installation
 
@@ -38,33 +42,52 @@
 2.  **Set up a Virtual Environment**
     ```bash
     python -m venv venv
-    source venv/bin/activate  # Windows: venv\Scripts\activate
+    # Windows: venv\Scripts\activate
+    # Mac/Linux: source venv/bin/activate
     ```
 
 3.  **Install Dependencies**
     ```bash
-    pip install django
+    pip install -r requirements.txt
     ```
 
-4.  **Run Migrations**
+4.  **Environment Variables**
+    Create a `.env` file in the root directory:
+    ```env
+    DATABASE_URL=your_tidb_connection_string
+    REDIS_URL=your_redis_url
+    SECRET_KEY=your_django_secret_key
+    DEBUG=True
+    ```
+
+5.  **Run Migrations & Start**
     ```bash
-    python manage.py makemigrations
     python manage.py migrate
-    ```
-
-5.  **Start the Server**
-    ```bash
     python manage.py runserver
     ```
     Access the app at `http://127.0.0.1:8000/`.
 
 ---
 
-## 📂 Project Structure
+## 📂 Project Architecture
 
-* `models.py`: Contains the `Room`, `Topic`, and `Message` models with relational logic.
-* `views.py`: Handles the logic for room CRUD (Create, Read, Update, Delete) and user authentication.
-* `templates/`: Modular HTML templates including a base layout and reusable components like feeds and sidebars.
-* `static/`: Custom CSS focusing on a clean, modern, and high-contrast user interface.
+* **`studybud/asgi.py`**: The entry point for the ASGI server (Daphne), handling both HTTP and WebSocket protocols.
+* **`base/consumers.py`**: Contains the WebSocket logic for real-time chat broadcasting.
+* **`base/models.py`**: Relational logic for `User`, `Room`, `Topic`, and `Message` with support for encrypted fields.
+* **`settings.py`**: Production-ready configuration including `WhiteNoise`, `dj-database-url`, and `CSRF_TRUSTED_ORIGINS`.
 
 ---
+
+🌐 Live Demo & Deployment Notes
+Live Link: https://chathub-72tx.onrender.com
+
+⚠️ Important Note on Media Files (Images/Uploads)
+While the application supports full image and file transitions locally, the live demo has specific limitations due to the Render Free Tier infrastructure:
+
+Local Environment: Files and images work perfectly as they are stored on your local persistent disk.
+
+Live Production: Render uses an ephemeral file system. This means any file uploaded to the chat-files/ directory is wiped immediately whenever the instance restarts or a new deployment occurs.
+
+No 24-Hour Persistence: Unlike some "temporary" hosting, the Free Tier does not guarantee even short-term persistence (like 24 hours) for local media storage.
+
+Database Persistence: All text-based data (Rooms, Messages, Users, and Topics) is 100% persistent as it is hosted on a separate TiDB Cloud cluster.
