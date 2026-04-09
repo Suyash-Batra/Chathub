@@ -9,8 +9,8 @@ pip install --only-binary :all: --prefer-binary -r requirements.txt
 # 2. Collect Static Files
 python manage.py collectstatic --no-input
 
-# 3. THE FIX:
-# --fake-initial is great, but sometimes we need to be more aggressive.
-# We run a normal migrate first. If it fails due to the "celery" table, 
-# the script will continue to the next line.
-python manage.py migrate --fake-initial || python manage.py migrate --fake
+# 3. THE FORCE SYNC
+# We use --fake-initial. 
+# It creates missing tables (like django_session) 
+# but ignores tables that already exist (like django_celery_beat).
+python manage.py migrate --fake-initial
