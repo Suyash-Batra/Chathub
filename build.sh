@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
-# exit on error
 set -o errexit
 
-# 1. Install dependencies
 pip install --upgrade pip setuptools wheel
-pip install --only-binary :all: --prefer-binary -r requirements.txt
+pip install -r requirements.txt
 
-# 2. Collect Static Files
 python manage.py collectstatic --no-input
 
-# 3. THE FORCE SYNC
-# We use --fake-initial. 
-# It creates missing tables (like django_session) 
-# but ignores tables that already exist (like django_celery_beat).
+# 1. Force a "fake" reset of the migration state 
+# This cleans up the mess from previous failed attempts
+python manage.py migrate --fake base 0001 || true
+
+# 2. Run the actual migration to create django_session and others
 python manage.py migrate --fake-initial
