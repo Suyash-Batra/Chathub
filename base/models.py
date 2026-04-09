@@ -45,14 +45,18 @@ class Room(models.Model):
             return "🧐", "Critical"
         else:
             return "☕", "Neutral / Quiet"
-    
+
     def save(self, *args, **kwargs):
         if self.description and len(self.description) > 10:
             try:
-                self.language = langid.classify(self.description)[0]
-            except:
+                # TextBlob uses Google Translate API under the hood for detection
+                blob = TextBlob(self.description)
+                self.language = blob.detect_language()
+            except Exception:
                 self.language = 'en'
+
         super().save(*args, **kwargs)
+
         if self.host:
             try:
                 from .utils import check_badges

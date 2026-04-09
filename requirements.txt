@@ -136,4 +136,3 @@ zope.interface>=8.2
 gunicorn
 whitenoise
 dj-database-url
-langid==1.1.6
