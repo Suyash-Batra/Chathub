@@ -14,12 +14,13 @@ class Topic(models.Model):
     
     def __str__(self):
         return self.name
+
 class Room(models.Model):
-    host = models.ForeignKey(User, on_delete=models.SET_NULL, null = True)
-    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null = True)
+    host = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    topic = models.ForeignKey(Topic, on_delete=models.SET_NULL, null=True)
     participants = models.ManyToManyField(User, related_name='participants', blank=True)
     name = models.CharField(max_length=200)
-    description = models.TextField(null = True, blank = True)
+    description = models.TextField(null=True, blank=True)
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     key = models.CharField(max_length=200, blank=True, null=True)
@@ -53,29 +54,30 @@ class Room(models.Model):
     def save(self, *args, **kwargs):
         if self.description and len(self.description) > 10:
             try:
-                # TextBlob uses Google Translate API under the hood for detection
                 blob = TextBlob(self.description)
                 self.language = blob.detect_language()
             except Exception:
                 self.language = 'en'
-
         super().save(*args, **kwargs)
-
         if self.host:
             try:
                 from .utils import check_badges
                 check_badges(self.host)
-            except Exception as e:
-                print(f"Badge Error: {e}")
-        
+            except Exception:
+                pass
+    
     def delete(self, *args, **kwargs):
-        host = self.host # Capture host before deleting
+        host = self.host
         super().delete(*args, **kwargs)
-        from .utils import check_badges
-        check_badges(host) # Re-check after room is gone
+        try:
+            from .utils import check_badges
+            check_badges(host)
+        except Exception:
+            pass
     
     def __str__(self):
         return self.name
+
     class Meta:
         ordering = ['-updated', '-created']
         
@@ -92,37 +94,39 @@ class Message(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True)
     sentiment_score = models.FloatField(default=0.0)
 
-   def save(self, *args, **kwargs):
-    if self.room.is_ephemeral and not self.expires_at:
-        self.expires_at = timezone.now() + timedelta(hours=24)
-    
-    # TextBlob logic is fine, but wrap the DB parts
-    super().save(*args, **kwargs)
-    
-    # ONLY run this if we aren't in a migration/setup phase
-    try:
-        if self.room and self.room.id:
-            self.room.participants.add(self.user)
-            self.room.update_vibe()
-        
-        from .utils import check_badges
-        check_badges(self.user)
-    except Exception:
-        # This prevents the 1146 error during the INITIAL build
-        pass
+    def save(self, *args, **kwargs):
+        if self.room.is_ephemeral and not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(hours=24)
+        if self.body:
+            try:
+                text_content = str(self.body)
+                analysis = TextBlob(text_content)
+                self.sentiment_score = analysis.sentiment.polarity
+            except Exception:
+                self.sentiment_score = 0.0
+        else:
+            self.sentiment_score = 0.0
+
+        super().save(*args, **kwargs)
+
+        try:
+            if self.room and self.room.id:
+                self.room.participants.add(self.user)
+                self.room.update_vibe()
+            from .utils import check_badges
+            check_badges(self.user)
+        except Exception:
+            pass
         
     def __str__(self):
         if self.body:
-            return self.body[0:50]
-        if self.audio_file:
-            return f"Voice Message by {self.user}"
-        return f"File by {self.user}"
+            return str(self.body)[0:50]
+        return "File/Audio Message"
     
 @receiver(post_delete, sender=Message)
 def delete_files_on_message_delete(sender, instance, **kwargs):
     audio = getattr(instance, 'audio_file', None)
     msg_file = getattr(instance, 'message_file', None)
-    
     for f in [audio, msg_file]:
         if f and hasattr(f, 'path') and os.path.isfile(f.path):
             os.remove(f.path)
