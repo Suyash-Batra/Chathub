@@ -1,14 +1,11 @@
 #!/usr/bin/env bash
 set -o errexit
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Collect static files
 python manage.py collectstatic --no-input
 
-# THE FIX: 
-# This tells Django to 'fake' the migrations that are already in the DB
-# so it doesn't crash on 'already exists', but it WILL create 
-# the missing 'django_session' table.
+# This will now recreate django_content_type, auth_permission, 
+# and django_session from scratch. 
+# --fake-initial will skip your 'base_message' and 'base_room' 
+# so you don't lose your actual chat data.
 python manage.py migrate --fake-initial
