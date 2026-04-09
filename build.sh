@@ -4,5 +4,6 @@ set -o errexit
 pip install -r requirements.txt
 python manage.py collectstatic --no-input
 
-# This MUST run. If the build crashes before this, the 1146 error stays.
-python manage.py migrate --fake-initial
+# This will now see that django_migrations is gone and 
+# try to create everything from scratch.
+python manage.py migrate
