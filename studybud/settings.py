@@ -113,9 +113,11 @@ TEMPLATES = [
 ]
 
 # --- DATABASE (MySQL/TiDB) ---
+import dj_database_url
+
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'mysql://root:1234@127.0.0.1:3306/myprojects'),
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600
     )
 }
