@@ -1,14 +1,10 @@
 #!/usr/bin/env bash
-# exit on error
 set -o errexit
 
-# 1. Install dependencies
 pip install --upgrade pip setuptools wheel
 pip install --only-binary :all: --prefer-binary -r requirements.txt
 
-# 2. Collect Static Files
 python manage.py collectstatic --no-input
 
-# 3. THE FINAL FIX: 
-# This creates missing tables but skips existing ones without crashing.
+# This is the key to skipping the "already exists" errors
 python manage.py migrate --fake-initial
