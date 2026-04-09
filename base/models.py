@@ -1,3 +1,4 @@
+import langid
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -6,7 +7,6 @@ from datetime import timedelta
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 import os
-from langdetect import detect
 from textblob import TextBlob
 from django.db.models import Avg
 
@@ -49,7 +49,7 @@ class Room(models.Model):
     def save(self, *args, **kwargs):
         if self.description and len(self.description) > 10:
             try:
-                self.language = detect(self.description)
+                self.language = langid.classify(self.description)[0]
             except:
                 self.language = 'en'
         super().save(*args, **kwargs)

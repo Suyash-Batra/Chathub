@@ -137,3 +137,4 @@ gunicorn
 whitenoise
 dj-database-url
 mysqlclient
+langid==1.1.6
