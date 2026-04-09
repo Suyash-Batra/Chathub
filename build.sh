@@ -10,4 +10,4 @@ pip install --only-binary :all: --prefer-binary -r requirements.txt
 python manage.py collectstatic --no-input
 
 # 3. Apply Database Migrations
-python manage.py migrate
+python manage.py migrate --fake
