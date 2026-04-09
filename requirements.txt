@@ -136,5 +136,4 @@ zope.interface>=8.2
 gunicorn
 whitenoise
 dj-database-url
-mysqlclient
 langid==1.1.6
