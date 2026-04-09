@@ -105,13 +105,21 @@ TEMPLATES = [
 
 # --- DATABASE (MySQL) ---
 import dj_database_url
+import os
+
 DATABASES = {
     'default': dj_database_url.config(
-        # Replace this with your actual local MySQL URL for local dev
-        default='mysql://root:1234@127.0.0.1:3306/myprojects',
+        default=os.environ.get('DATABASE_URL', 'mysql://root:1234@127.0.0.1:3306/myprojects'),
         conn_max_age=600
     )
 }
+
+# The "TiDB/Render Fix":
+# This catches the 'ssl-mode' from the URL and converts it for the driver
+if 'OPTIONS' in DATABASES['default']:
+    options = DATABASES['default']['OPTIONS']
+    if 'ssl-mode' in options:
+        options['ssl_mode'] = options.pop('ssl-mode')
 
 # --- AUTH & VALIDATION ---
 AUTH_PASSWORD_VALIDATORS = [
