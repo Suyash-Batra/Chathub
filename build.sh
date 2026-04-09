@@ -9,6 +9,6 @@ pip install --only-binary :all: --prefer-binary -r requirements.txt
 # 2. Collect Static Files
 python manage.py collectstatic --no-input
 
-# 3. THE FIX: Force sync the migration state
-# This marks all tables as "already created" so the build doesn't crash.
-python manage.py migrate --fake
+# 3. THE FINAL FIX: 
+# This creates missing tables but skips existing ones without crashing.
+python manage.py migrate --fake-initial
