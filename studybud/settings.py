@@ -121,13 +121,13 @@ DATABASES = {
     )
 }
 
-# Safe SSL check
+# TiDB SSL Handshake logic - Defined safely
 if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
-    opts = DATABASES['default']['OPTIONS']
-    if any(k in opts for k in ['ssl-mode', 'ssl_mode']):
-        opts['ssl'] = {'ca': None}
-        opts.pop('ssl-mode', None)
-        opts.pop('ssl_mode', None)
+    db_opts = DATABASES['default']['OPTIONS']
+    if any(k in db_opts for k in ['ssl-mode', 'ssl_mode']):
+        db_opts['ssl'] = {'ca': None}
+        db_opts.pop('ssl-mode', None)
+        db_opts.pop('ssl_mode', None)
         
 # --- AUTH & VALIDATION ---
 AUTH_PASSWORD_VALIDATORS = [
