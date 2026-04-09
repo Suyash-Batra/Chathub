@@ -114,7 +114,7 @@ TEMPLATES = [
 
 # --- DATABASE (MySQL/TiDB) ---
 import dj_database_url
-
+# --- DATABASE (MySQL/TiDB) ---
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL'),
@@ -122,16 +122,14 @@ DATABASES = {
     )
 }
 
-# TiDB SSL Configuration for PyMySQL
-if 'OPTIONS' in DATABASES['default']:
-    DATABASES['default']['OPTIONS']['ssl'] = {'ca': None}
-    # Check for both dash and underscore versions from the URL query params
-    if any(k in opts for k in ['ssl-mode', 'ssl_mode']):
-        # PyMySQL requires the 'ssl' key to be a dictionary
-        opts['ssl'] = {'ca': None}
-        # Purge the keys that cause 'Unexpected Keyword Argument' errors
-        opts.pop('ssl-mode', None)
-        opts.pop('ssl_mode', None)
+# TiDB Cloud + PyMySQL SSL Handshake logic
+if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
+    db_options = DATABASES['default']['OPTIONS']
+    # Check for SSL modes in a way that won't trigger a NameError
+    if any(k in db_options for k in ['ssl-mode', 'ssl_mode']):
+        db_options['ssl'] = {'ca': None}
+        db_options.pop('ssl-mode', None)
+        db_options.pop('ssl_mode', None)
 # --- AUTH & VALIDATION ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
