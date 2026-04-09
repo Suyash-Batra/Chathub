@@ -122,9 +122,9 @@ DATABASES = {
     )
 }
 
-# TiDB Cloud + PyMySQL SSL Handshake
+# TiDB SSL Configuration for PyMySQL
 if 'OPTIONS' in DATABASES['default']:
-    opts = DATABASES['default']['OPTIONS']
+    DATABASES['default']['OPTIONS']['ssl'] = {'ca': None}
     # Check for both dash and underscore versions from the URL query params
     if any(k in opts for k in ['ssl-mode', 'ssl_mode']):
         # PyMySQL requires the 'ssl' key to be a dictionary
