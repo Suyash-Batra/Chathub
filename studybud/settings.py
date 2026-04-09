@@ -13,8 +13,14 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-(w7vo0xlbd5fl9g*^7_..
 
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+# Change this from ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = [
+    'chathub-72tx.onrender.com', 
+    '127.0.0.1', 
+    'localhost'
+]
 
+# Better yet, use the Render Environment Variable:
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
