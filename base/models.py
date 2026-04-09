@@ -30,14 +30,14 @@ class Room(models.Model):
     
     def update_vibe(self):
     # ADD THIS CHECK: Prevents crash if table doesn't exist during migration
-    if not self.id: return 
-        try:
-            avg = self.message_set.aggregate(Avg('sentiment_score'))['sentiment_score__avg']
-            new_sentiment = avg if avg is not None else 0.0
-            Room.objects.filter(id=self.id).update(current_sentiment=new_sentiment)
-            self.current_sentiment = new_sentiment
-        except Exception:
-            pass
+        if not self.id: return 
+            try:
+                avg = self.message_set.aggregate(Avg('sentiment_score'))['sentiment_score__avg']
+                new_sentiment = avg if avg is not None else 0.0
+                Room.objects.filter(id=self.id).update(current_sentiment=new_sentiment)
+                self.current_sentiment = new_sentiment
+            except Exception:
+                pass
         
     @property
     def vibe_display(self):
