@@ -8,8 +8,12 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
                 Back
             </a>
+            {% if not 'add-topic/' in request.path %}
             <h2>Edit Content</h2>
             <p>Update the information below.</p>
+            {% else %}
+            <h2>Add Topic</h2>
+            {% endif %}
         </header>
 
         <form method="POST" action="" class="settings-form">
@@ -17,23 +21,33 @@
             
             <div class="django-form-wrapper">
 
-    {{ form.name.label_tag }}
-    {{ form.name }}
+    {{ form.name.label_tag }}<br>
+    {{ form.name }}<br>
 
-    {{ form.topic.label_tag }}
-    {{ form.topic }}
+    {{ form.topic.label_tag }}<br>
+    {{ form.topic }}<br>
 
-    {{ form.description.label_tag }}
-    {{ form.description }}
-
+    {{ form.description.label_tag }}<br>
+    {{ form.description }}<br>
+{% if not 'add-topic/' in request.path %}
     <label>
-        Private Room:
-        {{ form.private }}
+        Language:<br>
+        {{ form.language }}<br>
     </label>
 
+    <label>
+        Private Room:<br>
+        {{ form.private }}<br>
+    </label>
+
+    <label>
+        Emphereal:<br>
+        {{ form.is_ephemeral }}<br>
+    </label>
+{% endif %}
     <div id="key-field">
-        {{ form.key.label_tag }}
-        {{ form.key }}
+        {{ form.key.label_tag }}<br>
+        {{ form.key }}<br>
     </div>
 
 </div>

@@ -1,3 +1,13 @@
+<style>
+    #theme-icon {
+    transition: transform 0.3s ease;
+}
+
+#theme-toggle:active #theme-icon {
+    transform: scale(0.8) rotate(20deg);
+}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 <header class="navbar">
     <div class="nav-content">
         <div class="nav-left">
@@ -14,6 +24,37 @@
             {% else %}
                 <a href="{% url 'login' %}" class="nav-btn login-btn">Login</a>
             {% endif %}
+            <button id="theme-toggle" class="nav-btn" style="background: var(--border); color: var(--text-dark); border: none; cursor: pointer; padding: 10px;">
+    <i id="theme-icon" class="fa-solid fa-moon"></i>
+</button>
         </div>
     </div>
+    <script>
+        const themeToggle = document.getElementById('theme-toggle');
+const themeIcon = document.getElementById('theme-icon');
+const body = document.body;
+
+// 1. Check for saved user preference on load
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme === 'light') {
+    body.classList.add('light-theme');
+    themeIcon.className = 'fa-solid fa-sun'; // Show sun if light mode is active
+}
+
+// 2. Toggle Logic
+themeToggle.addEventListener('click', () => {
+    body.classList.toggle('light-theme');
+    
+    let theme = 'dark';
+    if (body.classList.contains('light-theme')) {
+        theme = 'light';
+        themeIcon.className = 'fa-solid fa-sun';
+    } else {
+        themeIcon.className = 'fa-solid fa-moon';
+    }
+    
+    // 3. Save the choice
+    localStorage.setItem('theme', theme);
+});
+    </script>
 </header>

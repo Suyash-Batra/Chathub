@@ -1,28 +1,43 @@
 {% for r in rooms %}
 <article class="room-card">
-    <div class="room-card__header">
-        <a href="{% url 'user-profile' r.host.id %}" class="room-author">
-            <span>@{{ r.host.username }}</span>
-        </a>
-        
-        {% if r.host == request.user %}
-        <div class="room-actions">
-            <a href="{% url 'update-room' r.id %}" class="action-link edit">Edit</a>
-            <a href="{% url 'delete-room' r.id %}" class="action-link delete">Delete</a>
-        </div>
-        {% endif %}
-    </div>
+  <div class="room-card__header">
+    <a href="{% url 'user-profile' r.host.id %}" class="room-author">
+      <span>@{{ r.host.username }}</span>
+    </a>
 
-    <div class="room-card__content">
-        <h3 class="room-title">
-            <a href="{% url 'room' r.id %}">{{ r.name }}</a>
-        </h3>
-        <p class="room-topic-tag">{{ r.topic.name }}</p>
-        <p class="room-status-tag">{% if r.private %} Private {% else %} Public {% endif %}</p>
+    {% if r.host == request.user %}
+    <div class="room-actions">
+      <a href="{% url 'update-room' r.id %}" class="action-link edit">Edit</a>
+      <a href="{% url 'delete-room' r.id %}" class="action-link delete"
+        >Delete</a
+      >
     </div>
-    
-    <div class="room-card__footer">
-        <a href="{% url 'room' r.id %}" class="btn-join">Enter Chat</a>
-    </div>
+    {% endif %}
+  </div>
+    <h3 class="room-title">
+      <a href="{% url 'room' r.id %}">{{ r.name }}</a>
+    </h3>
+  <div class="room-tags-container">
+    <span class="room-tag room-topic-tag">{{ r.topic.name }}</span>
+    <span class="room-tag room-lang-tag">Lang: {{ r.language }}</span>
+
+    <span class="room-tag room-status-tag">
+      {% if r.private %}Private{% else %}Public{% endif %}
+    </span>
+
+    {% if r.is_ephemeral %}
+    <span class="room-tag room-ephemeral-tag">
+      <i class="fa-solid fa-bolt-lightning"></i>Ephemeral
+    </span>
+    {% endif %} {% if not r.private %}
+    <span class="room-tag room-sentiments-tag">
+      {{ r.vibe_display.0 }} {{ r.vibe_display.1 }}
+    </span>
+    {% endif %}
+  </div>
+
+  <div class="room-card__footer">
+    <a href="{% url 'room' r.id %}" class="btn-join">Enter Chat</a>
+  </div>
 </article>
 {% endfor %}

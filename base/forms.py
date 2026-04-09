@@ -7,7 +7,7 @@ class RoomForm(ModelForm):
     class Meta:
         model = Room
         fields = '__all__'
-        exclude = ['host', 'participants']
+        exclude = ['host', 'participants', 'current_sentiment']
         
     def save(self, commit=True):
         room = super().save(commit=False)

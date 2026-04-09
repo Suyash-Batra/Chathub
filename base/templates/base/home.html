@@ -2,7 +2,12 @@
 {% block content %}
 
 <div class="home-container">
-    <aside class="topics-sidebar">
+    <div class="mobile-menu-toggles">
+        <a href="#topics" class="btn-mobile">Browse Topics</a>
+        <a href="#activity" class="btn-mobile">Recent Activity</a>
+    </div>
+
+    <aside class="topics-sidebar" id="topics">
         <h3 class="sidebar-title">Browse Topics</h3>
         <nav class="topic-list">
             <a href="{% url 'home' %}" class="topic-item active">All Rooms</a>
@@ -11,7 +16,7 @@
                 {{topic.name}} <span>{{topic.room_set.all.count}}</span>
             </a>
             {% endfor %}
-            <a href="{% url 'add-topic'%}"><button class="btn btn-primary" style="border: none; display: block; margin: 0 auto;">Add Topic</button></a>
+            <a href="{% url 'add-topic'%}" class="btn btn-primary" >Add Topic</a>
         </nav>
     </aside>
 
@@ -29,7 +34,7 @@
         </div>
     </section>
 
-    <aside class="activity-sidebar">
+    <aside class="activity-sidebar" id="activity">
         <h3 class="sidebar-title">Recent Activity</h3>
         <div class="activity-container">
             {% include "base/recent_activity.html" %}

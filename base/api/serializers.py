@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from base.models import Room, Topic
+from base.models import Room, Topic, UserBadge
 from django.contrib.auth.models import User
 
 class RoomSerializer(ModelSerializer):
@@ -13,4 +13,8 @@ class TopicSerializer(ModelSerializer):
 class UserSerializer(ModelSerializer):
     class Meta:
         model = User
+        fields = '__all__'
+class UbadgeSerializer(ModelSerializer):
+    class Meta:
+        model = UserBadge
         fields = '__all__'

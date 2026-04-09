@@ -20,4 +20,8 @@ urlpatterns = [
     path('update-user/', views.UpdateUserView.as_view(), name="update-user"),
 
     path('add-topic/', views.AddTopicView.as_view(), name="add-topic"),
+    
+    path('upload-voice/<str:pk>/', views.VoiceUploadView.as_view(), name="upload-voice"),
+    path('upload-file/<str:pk>/', views.FileUploadView.as_view(), name="upload-file"),
+    path('check-message/<int:pk>/', views.check_message_ready, name='check-message'),
 ]

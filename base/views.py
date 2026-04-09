@@ -1,7 +1,8 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
+import os
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import HttpResponse, JsonResponse
 from django.views import View
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView
 from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
@@ -9,9 +10,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
-from django.urls import reverse_lazy
-from .models import Room, Topic, Message
+from django.urls import reverse_lazy, reverse
+from .models import Room, Topic, Message, UserBadge
 from .forms import RoomForm, UserForm, TopicForm
+from django.db.models import Count
+from .tasks import async_generate_image
 
 class CreateRoomView(LoginRequiredMixin, CreateView):
     model = Room
@@ -42,27 +45,20 @@ class HomeView(ListView):
         context = super().get_context_data(**kwargs)
         q = self.request.GET.get('q') or ''
         rooms = context['rooms']
-
-        context['topics'] = Topic.objects.all()
+        context['topics'] = Topic.objects.annotate(room_count=Count('room')).order_by('-room_count')
         context['roomcount'] = rooms.count()
         context['room_messages'] = Message.objects.filter(
             Q(room__topic__name__icontains=q)
-        ).order_by('-created')
-
+        ).order_by('-created')[0:5]
         return context
-
-from django.shortcuts import render, redirect
-from django.views import View
-from django.contrib.auth.hashers import check_password
-from .models import Room, Message
-
 
 class RoomView(View):
     def get(self, request, pk):
-        room = Room.objects.get(id=pk)
+        room = get_object_or_404(Room, id=pk)
         if room.private:
             if not request.session.get(f'room_{room.id}_access'):
                 return render(request, 'base/room_pass.html', {'room': room})
+        
         context = {
             'room': room,
             'room_messages': room.message_set.all().order_by('created'),
@@ -71,7 +67,9 @@ class RoomView(View):
         return render(request, 'base/room.html', context)
 
     def post(self, request, pk):
-        room = Room.objects.get(id=pk)
+        room = get_object_or_404(Room, id=pk)
+        
+        # Handle Private Room Access
         if room.private and not request.session.get(f'room_{room.id}_access'):
             entered_key = request.POST.get('key')
             if not check_password(entered_key, room.key):
@@ -81,14 +79,34 @@ class RoomView(View):
                 })
             request.session[f'room_{room.id}_access'] = True
             return redirect('room', pk=room.id)
-        Message.objects.create(
-            user=request.user,
-            room=room,
-            body=request.POST.get('body')
-        )
+
+        # Handle Message Logic
+        body = request.POST.get('body', '').strip()
+        
+        if body.startswith('/generate '):
+            prompt_text = body.replace('/generate ', '').strip()
+            
+            # Create a "Placeholder" message first
+            msg = Message.objects.create(
+                user=request.user,
+                room=room,
+                body=f"✨ AI is thinking: '{prompt_text}'..."
+            )
+            
+            # Trigger Celery Task with the placeholder ID
+            async_generate_image.delay(prompt_text, room.id, request.user.id, msg.id)
+            
+        elif body:
+            # Normal message
+            Message.objects.create(
+                user=request.user,
+                room=room,
+                body=body
+            )
+            
         room.participants.add(request.user)
         return redirect('room', pk=room.id)
-    
+
 class UpdateRoomView(LoginRequiredMixin, UpdateView):
     model = Room
     form_class = RoomForm
@@ -108,11 +126,9 @@ class DeleteRoomView(LoginRequiredMixin, DeleteView):
     login_url = 'login'
     success_url = reverse_lazy('home')
     context_object_name = "obj"
-    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        obj = self.get_object()
-        context["name"] = obj.name
+        context["name"] = self.get_object().name
         return context
     
 class LoginView(View):
@@ -125,11 +141,6 @@ class LoginView(View):
         username = request.POST.get("username").lower()
         password = request.POST.get("pass")
 
-        try:
-            User.objects.get(username=username)
-        except:
-            messages.error(request, "User dosent exist")
-
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
@@ -137,7 +148,6 @@ class LoginView(View):
             return redirect('home')
         else:
             messages.error(request, "Wrong username or password")
-
         return render(request, 'base/login_register.html', {'page': 'login'})
 
 class LogoutView(View):
@@ -152,7 +162,6 @@ class RegisterView(View):
 
     def post(self, request):
         form = UserCreationForm(request.POST)
-
         if form.is_valid():
             user = form.save(commit=False)
             user.username = user.username.lower()
@@ -161,36 +170,50 @@ class RegisterView(View):
             return redirect('home')
         else:
             messages.error(request, 'An error occured while registration')
-
         return render(request, 'base/login_register.html', {'form': form})
+
+from django.http import JsonResponse
 
 class DeleteMessageView(LoginRequiredMixin, DeleteView):
     model = Message
     template_name = 'base/delete.html'
-    login_url = 'login'
-    success_url = reverse_lazy('home')
     context_object_name = "obj"
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        
+        # Scenario A: The JavaScript Popup (AJAX)
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            self.object.delete()
+            return JsonResponse({"status": "success"}, status=200)
+        
+        # Scenario B: The standard "Confirm" button on delete.html
+        return super().post(request, *args, **kwargs)
+
+    def get_success_url(self):
+        # Where to go if they deleted via the manual page
+        return reverse('room', kwargs={'pk': self.get_object().room.id})
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        obj = self.get_object()
-        context["name"] = obj.body
+        context["name"] = self.get_object().body
         return context
     
-
 class UserProfileView(View):
     def get(self, request, pk):
-        user = User.objects.get(id=pk)
+        user = get_object_or_404(User, id=pk)
         rooms = user.room_set.all()
-
+        
+        badges = UserBadge.objects.filter(user=user).select_related('badge')
+        
         context = {
             'users': user,
             'rooms': rooms,
-            'room_messages': user.message_set.all(),
+            'room_messages': user.message_set.all()[0:5],
             'topics': Topic.objects.all(),
-            'roomcount': rooms.count()
+            'roomcount': rooms.count(),
+            'badges': badges,
         }
-
         return render(request, 'base/profile.html', context)
 
 class UpdateUserView(LoginRequiredMixin, View):
@@ -200,11 +223,9 @@ class UpdateUserView(LoginRequiredMixin, View):
 
     def post(self, request):
         form = UserForm(request.POST, instance=request.user)
-
         if form.is_valid():
             form.save()
             return redirect('user-profile', pk=request.user.id)
-
         return render(request, 'base/update_user.html', {'form': form})
 
 class AddTopicView(LoginRequiredMixin, CreateView):
@@ -217,3 +238,51 @@ class AddTopicView(LoginRequiredMixin, CreateView):
         form.save()
         return redirect('home')
 
+class VoiceUploadView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        room = get_object_or_404(Room, id=pk)
+        audio = request.FILES.get('audio')
+        if audio:
+            msg = Message.objects.create(user=request.user, room=room, audio_file=audio, body="Voice Message")
+            return JsonResponse({'id': msg.id, 'audio_url': msg.audio_file.url, 'user': request.user.username, 'user_id': request.user.id})
+        return JsonResponse({'error': 'No audio'}, status=400)
+
+class FileUploadView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        try:
+            room = get_object_or_404(Room, id=pk)
+            file = request.FILES.get('file')
+            if not file:
+                return JsonResponse({'error': 'No file provided'}, status=400)
+            
+            ext = os.path.splitext(file.name)[1].lower()
+            is_img = ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+
+            msg = Message.objects.create(
+                user=request.user, 
+                room=room, 
+                message_file=file, 
+                is_image=is_img, 
+                body=f"File: {file.name}"
+            )
+
+            return JsonResponse({
+                'id': msg.id, 
+                'file_url': msg.message_file.url, 
+                'is_image': is_img, 
+                'user': request.user.username, 
+                'user_id': request.user.id
+            })
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+def check_message_ready(request, pk):
+    try:
+        msg = Message.objects.get(id=pk)
+        return JsonResponse({
+            'is_ready': msg.is_image,
+            'file_url': msg.message_file.url if msg.is_image else None,
+            'body': msg.body
+        })
+    except Message.DoesNotExist:
+        return JsonResponse({'error': 'Not found'}, status=404)

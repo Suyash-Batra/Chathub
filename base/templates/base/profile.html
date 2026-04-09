@@ -4,8 +4,8 @@
 <div class="profile-container">
     <header class="profile-header">
         <div class="profile-meta">
-            <h1 class="profile-username">@{{users.username}}</h1>
-            <p class="profile-joined">Joined {{users.date_joined|date:"F Y"}}</p>
+            <h1 class="profile-username">@{{users.username}}</h1><br>
+            <p class="profile-joined" style="font-size: 1rem;">Joined {{users.date_joined|date:"F Y"}}</p>
         </div>
         
         {% if request.user == users %}
@@ -21,9 +21,7 @@
             <nav class="topic-list">
                 <a href="{% url 'home' %}" class="topic-item">All Rooms</a>
                 {% for topic in topics %}
-                <a href="{% url 'home' %}?q={{topic.name}}" class="topic-item">
-                    {{topic.name}}
-                </a>
+                <a href="{% url 'home' %}?q={{topic.name}}" class="topic-item">{{topic.name}}</a>
                 {% endfor %}
             </nav>
         </aside>
@@ -31,7 +29,7 @@
         <section class="profile-main">
             <div class="section-header">
                 <h2>Rooms Hosted - {{roomcount}}</h2>
-                <br>
+                <div></div>
             </div>
             <div class="profile-feed">
                 {% include "base/feed.html" %}
@@ -45,5 +43,24 @@
             </div>
         </aside>
     </div>
+
+    <section class="achievements-shelf">
+    <div class="shelf-header">
+        <h3 class="sidebar-title">Achievements</h3>
+        <div class="shelf-line"></div>
+    </div>
+    <div class="badge-grid">
+        {% for ub in badges %}
+        <div class="badge-tool" data-tooltip="{{ ub.badge.description }}">
+            <div class="badge-ring">
+                <img src="{{ ub.badge.icon.url }}" alt="{{ ub.badge.name }}" class="badge-img">
+            </div>
+            <span class="badge-label">{{ ub.badge.name }}</span>
+        </div>
+        {% empty %}
+        <p class="empty-msg">No badges earned yet.</p>
+        {% endfor %}
+    </div>
+</section>
 </div>
 {% endblock content %}

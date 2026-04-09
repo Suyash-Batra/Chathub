@@ -1,66 +1,401 @@
-{% extends "main.html" %} 
-{% block content %}
+{% extends "main.html" %} {% block content %}
+
+<style>
+  .chat-form {
+    background-color: var(--color-dark-medium);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--color-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    height: 35px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .btn-icon:hover { background: rgba(113, 122, 235, 0.1); }
+
+  #message-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-light);
+    flex: 1;
+    font-size: 15px;
+  }
+
+  .btn-submit {
+    background-color: var(--color-main);
+    color: white;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 5px;
+    height: 35px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .message-bubble {
+    position: relative;
+    padding-right: 30px !important;
+  }
+
+  .msg-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      opacity: 0.5;
+      
+      /* These lines fix the white square issue */
+      background: transparent !important; 
+      border: none !important;
+      outline: none !important;
+      padding: 0;
+      margin: 0;
+      
+      color: var(--color-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+  }
+
+  .msg-delete:hover {
+      opacity: 1;
+      color: #ff4757; /* A nice red for delete */
+      transform: scale(1.1); /* Slight pop on hover */
+  }
+
+  /* Ensure the SVG inside inherits the color */
+  .msg-delete svg {
+      display: block;
+      pointer-events: none; /* Makes sure the click hits the button, not the path */
+  }
+
+  /* Added a small pulse animation for AI thinking */
+  .ai-thinking {
+    font-style: italic;
+    color: var(--color-main);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+
+  #chat-box {
+    max-height: 70vh; /* Adjust this based on your design */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;  
+  }
+</style>
 
 <div class="room-container">
-    <aside class="participants-sidebar">
-        <h3 class="sidebar-title">Participants <span>({{participants.count}})</span></h3>
-        <div class="participant-list">
-            {% for p in participants %}
-            <a href="{% url 'user-profile' p.id %}" class="participant-item">
-                <span>@{{p.username}}</span>
-            </a>
-            {% endfor %}
-        </div>
-    </aside>
+  <aside class="participants-sidebar">
+    <h3 class="sidebar-title">Participants <span>({{participants.count}})</span></h3>
+    <div class="participant-list" id="participant-side-list">
+      {% for p in participants %}
+      <a href="{% url 'user-profile' p.id %}" class="participant-item"><span>@{{p.username}}</span></a>
+      {% endfor %}
+    </div>
+  </aside>
 
-    <section class="chat-main">
-        <header class="chat-header">
-            <div class="chat-header__info">
-                <h1>{{ room.name }}</h1>
-                <p class="text-muted">{{ room.description|default:"No description provided." }}</p>
-            </div>
-        </header>
+  <section class="chat-main">
+    <header class="chat-header">
+      <div class="chat-header__info">
+        <h1>{{ room.name }}</h1>
+        <p class="text-muted">{{ room.description|default:"No description provided." }}</p>
+      </div>
+    </header>
 
-        <div class="messages-window">
-<div class="messages-list">
-    {% for message in room_messages %}
-    <div class="message-item {% if request.user == message.user %}message-item--me{% endif %}">
-        <div class="message-meta">
+    <div class="messages-window">
+      <div class="messages-list" id="chat-box">
+        {% for message in room_messages %}
+        <div id="msg-{{message.id}}" class="message-item {% if request.user == message.user %}message-item--me{% endif %}">
+          <div class="message-meta">
             <a href="{% url 'user-profile' message.user.id %}">@{{message.user}}</a>
             <small>{{message.created|timesince}} ago</small>
+          </div>
+          <div class="message-bubble">
+            {% if message.audio_file %}
+              <audio controls src="{{message.audio_file.url}}" style="height: 30px"></audio>
+            {% elif message.message_file %}
+              {% if message.is_image %}
+                <img src="{{message.message_file.url}}" style="max-width: 250px; border-radius: 8px; display: block;" onclick="window.open(this.src)" />
+              {% else %}
+                <a href="{{message.message_file.url}}" target="_blank">Download File</a>
+              {% endif %}
+            {% else %}
+              <p>{{message.body}}</p>
+            {% endif %}
+
+        {% if request.user == message.user %}
+        <button type="button" onclick="deleteMessage(event, '{{message.id}}')" class="msg-delete">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+        </button>
+        {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <div class="empty-chat">No messages yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="chat-input-area" style="padding: 15px">
+      {% if request.user.is_authenticated %}
+      <form id="chat-form" class="chat-form">
+        {% csrf_token %}
+        <button type="button" id="file-btn" class="btn-icon" title="Upload File">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+        </button>
+        <input type="file" id="file-input" style="display: none" />
+
+        <button type="button" id="record-btn" class="btn-icon" title="Record Voice">
+          <svg id="mic-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+        </button>
+
+        <input id="message-input" type="text" placeholder="Message #{{room.name}}" required autocomplete="off" />
+        <button type="submit" class="btn-submit">Send</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+</div>
+<script>
+let chatBox, currentUser, roomId, socket;
+let mediaRecorder;
+let audioChunks = [];
+const scrollToBottom = () => {
+    if (chatBox) {
+        setTimeout(() => {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }, 100);
+    }
+};
+async function deleteMessage(event, msgId) {
+    event.preventDefault();
+    if (!confirm("Are you sure you want to delete this message?")) return;
+    try {
+        const response = await fetch(`/delete-message/${msgId}/`, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+        });
+        if (response.ok) {
+            const msgElement = document.getElementById(`msg-${msgId}`);
+            if (msgElement) {
+                msgElement.style.transition = "opacity 0.3s";
+                msgElement.style.opacity = "0";
+                setTimeout(() => msgElement.remove(), 300);
+            }
+        } else {
+            alert("Failed to delete from server. Status: " + response.status);
+        }
+    } catch (error) {
+        console.error("Error deleting message:", error);
+        alert("Network error occurred.");
+    }
+}
+
+function renderMessage(data) {
+    const msgId = data.msg_id || data.id;
+    if (!msgId) return;
+    let existingMsg = document.getElementById(`msg-${msgId}`);
+    const isMe = data.user === currentUser;
+    const isMeClass = isMe ? "message-item--me" : "";
+    const isThinking = data.message && data.message.includes("AI is thinking");
+
+    if (isThinking) {
+        startPolling(msgId);
+    }
+
+    let content = "";
+    
+    // --- CONTENT LOGIC PRIORITY ---
+
+    // Priority 1: If it's an AI thinking message, ignore the file_url for now
+    if (isThinking) {
+        content = `<p class="ai-thinking">${data.message}</p>`;
+    } 
+    // Priority 2: Voice Messages
+    else if (data.audio_url) {
+        content = `<audio controls src="${data.audio_url}" style="height: 30px"></audio>`;
+    } 
+    // Priority 3: Files / Images
+    else if (data.file_url) {
+        if (data.is_image || data.is_ready) {
+            content = `<img src="${data.file_url}?t=${new Date().getTime()}" style="max-width: 250px; border-radius: 8px;" onclick="window.open(this.src)">`;
+        } else {
+            content = `<a href="${data.file_url}" target="_blank" style="color: var(--color-main); text-decoration: underline;">Download File</a>`;
+        }
+    } 
+    // Priority 4: Standard Text
+    else {
+        content = `<p>${data.message || ""}</p>`;
+    }
+
+    // --- DELETE BUTTON LOGIC ---
+    // Ensure the delete button shows up for placeholders too
+    let deleteBtn = "";
+    if (isMe || data.user === "AI") { // Added AI check if you want to delete AI messages
+        deleteBtn = `
+            <button type="button" onclick="deleteMessage(event, '${msgId}')" class="msg-delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </button>`;
+    }
+
+    const html = `
+        <div class="message-meta">
+            <a href="#">@${data.user}</a> 
+            <small>${data.created_at || 'Just now'}</small>
         </div>
         <div class="message-bubble">
-            <p>{{message.body}}</p>
-            {% if request.user == message.user %}
-            <a href="{% url 'delete-message' message.id %}" class="msg-delete" title="Delete message">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-            </a>
-            {% endif %}
+            ${content}
+            ${deleteBtn}
         </div>
-    </div>
-    {% empty %}
-    <div class="empty-chat">No messages yet. Start the conversation!</div>
-    {% endfor %}
-</div>
-        </div>
+    `;
 
-        <div class="chat-input-area">
-            {% if request.user.is_authenticated %}
-            <form action="" method="POST" class="chat-form">
-                {% csrf_token %}
-                <input type="text" name="body" placeholder="Message #{{room.name}}" required autocomplete="off">
-                <button type="submit">Send</button>
-            </form>
-            {% else %}
-            <p class="auth-notice">Please <a href="{% url 'login' %}">Login</a> to participate in the chat.</p>
-            {% endif %}
-        </div>
-    </section>
+    if (existingMsg) {
+        existingMsg.innerHTML = html;
+        // If it's an existing message updating from "Thinking" to "Image", 
+        // make sure the delete button is still there.
+    } else {
+        const div = document.createElement("div");
+        div.id = `msg-${msgId}`;
+        div.className = `message-item ${isMeClass}`;
+        div.innerHTML = html;
+        chatBox.appendChild(div);
+        scrollToBottom();
+    }
+}
 
-    <aside class="activity-sidebar">
-        <h3 class="sidebar-title">Global Activity</h3>
-        {% include "base/recent_activity.html" %}
-    </aside>
-</div>
+function startPolling(msgId) {
+    let attempts = 0;
+    const maxAttempts = 30;
+    const interval = setInterval(async () => {
+        attempts++;
+        try {
+            const resp = await fetch(`/check-message/${msgId}/`);
+            const data = await resp.json();
+            if (data.is_ready) {
+                clearInterval(interval);
+                renderMessage({ msg_id: msgId, user: "AI", file_url: data.file_url, is_ready: true });
+            } else if (attempts >= maxAttempts) {
+                clearInterval(interval);
+                const msgDiv = document.getElementById(`msg-${msgId}`);
+                if (msgDiv) msgDiv.querySelector('.message-bubble').innerHTML = `<p style="color: #ff5f5f;">⚠️ AI timed out.</p>`;
+            }
+        } catch (err) { console.error("Poll failed", err); }
+    }, 3000);
+}
 
+// --- INITIALIZATION BLOCK ---
+document.addEventListener("DOMContentLoaded", function () {
+    chatBox = document.getElementById("chat-box");
+    currentUser = "{{ request.user.username }}";
+    roomId = "{{ room.id }}";
+    
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message-input");
+    const micIcon = document.getElementById("mic-icon");
+    const recordBtn = document.getElementById("record-btn");
+    const fileBtn = document.getElementById("file-btn");
+    const fileInput = document.getElementById("file-input");
+
+    // WebSocket Connection
+    function connect() {
+        const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+        socket = new WebSocket(protocol + window.location.host + "/ws/chat/" + roomId + "/");
+        socket.onmessage = (e) => renderMessage(JSON.parse(e.data));
+        socket.onclose = () => setTimeout(connect, 2000);
+    }
+    connect();
+
+    // Scroll if images load late
+    chatBox.addEventListener('load', (e) => { if (e.target.tagName === 'IMG') scrollToBottom(); }, true);
+
+    // Form Submit
+    if(form) {
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            if (input.value.trim() === "") return;
+            socket.send(JSON.stringify({ 'message': input.value }));
+            input.value = "";
+        });
+    }
+
+    // Voice Recording
+    recordBtn.addEventListener("click", async () => {
+        if (!mediaRecorder || mediaRecorder.state === "inactive") {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const supportedType = ["audio/webm", "audio/mp4", "audio/ogg"].find(t => MediaRecorder.isTypeSupported(t));
+                mediaRecorder = new MediaRecorder(stream, { mimeType: supportedType });
+                audioChunks = [];
+                mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+                mediaRecorder.onstop = async () => {
+                    stream.getTracks().forEach(track => track.stop());
+                    const audioBlob = new Blob(audioChunks, { type: supportedType });
+                    const formData = new FormData();
+                    formData.append("audio", audioBlob, "voice.webm");
+                    const resp = await fetch(`/upload-voice/${roomId}/`, {
+                        method: "POST",
+                        headers: { "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value },
+                        body: formData,
+                    });
+                    const data = await resp.json();
+                    if (data.audio_url) socket.send(JSON.stringify({ message: "Voice", audio_url: data.audio_url, id: data.id }));
+                };
+                mediaRecorder.start();
+                micIcon.style.stroke = "red";
+            } catch (err) { alert("Mic access denied"); }
+        } else {
+            mediaRecorder.stop();
+            micIcon.style.stroke = "currentColor";
+        }
+    });
+
+    // File Upload
+    fileBtn.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async () => {
+        if (fileInput.files.length === 0) return;
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        const resp = await fetch(`/upload-file/${roomId}/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value },
+            body: formData,
+        });
+        const data = await resp.json();
+        if (data.file_url) socket.send(JSON.stringify({ message: "", file_url: data.file_url, is_image: data.is_image, id: data.id }));
+    });
+
+    scrollToBottom();
+});
+</script>
 {% endblock %}

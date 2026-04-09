@@ -1,5 +1,14 @@
+# Environments
 venv/
+env/
+.env
+
+# Python byte code
+**/__pycache__/
 *.pyc
-__pycache__/
+
+# Databases
 db.sqlite3
+
+# OS files
 .DS_Store
