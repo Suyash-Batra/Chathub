@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
-from celery.schedules import crontab
 
+import dj_database_url
+from celery.schedules import crontab
+import pymysql
+pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,10 +106,7 @@ TEMPLATES = [
     },
 ]
 
-# --- DATABASE (MySQL) ---
-import dj_database_url
-import os
-
+# --- DATABASE (MySQL/TiDB) ---
 DATABASES = {
     'default': dj_database_url.config(
         default=os.environ.get('DATABASE_URL', 'mysql://root:1234@127.0.0.1:3306/myprojects'),
@@ -114,13 +114,16 @@ DATABASES = {
     )
 }
 
-# The "TiDB/Render Fix":
-# This catches the 'ssl-mode' from the URL and converts it for the driver
+# TiDB Cloud + PyMySQL SSL Handshake
 if 'OPTIONS' in DATABASES['default']:
-    options = DATABASES['default']['OPTIONS']
-    if 'ssl-mode' in options:
-        options['ssl_mode'] = options.pop('ssl-mode')
-
+    opts = DATABASES['default']['OPTIONS']
+    # Check for both dash and underscore versions from the URL query params
+    if any(k in opts for k in ['ssl-mode', 'ssl_mode']):
+        # PyMySQL requires the 'ssl' key to be a dictionary
+        opts['ssl'] = {'ca': None}
+        # Purge the keys that cause 'Unexpected Keyword Argument' errors
+        opts.pop('ssl-mode', None)
+        opts.pop('ssl_mode', None)
 # --- AUTH & VALIDATION ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
