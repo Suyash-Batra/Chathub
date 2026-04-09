@@ -164,5 +164,8 @@ if not os.path.exists(MEDIA_ROOT):
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CORS_ALLOW_ALL_ORIGINS = True
 
-if not DEBUG:
-    CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_EXTERNAL_HOSTNAME}"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://chathub-72tx.onrender.com",
+]
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
