@@ -53,10 +53,11 @@ class Room(models.Model):
             return "☕", "Neutral / Quiet"
 
     def save(self, *args, **kwargs):
-        try:
-            self.language = langid.classify(self.description)[0]
-        except:
-            self.language = 'en'
+        if self.description and len(self.description) > 10:
+            try:
+                self.language = langid.classify(self.description)[0]
+            except:
+                self.language = 'en'
         super().save(*args, **kwargs)
         if self.host:
             try:
