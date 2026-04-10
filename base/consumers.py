@@ -2,7 +2,8 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 from .models import Room, Message
-from .tasks import async_generate_image 
+from .tasks import async_generate_image, async_get_advice, async_get_joke
+
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -34,6 +35,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 msg_id = new_msg.id
                 async_generate_image.delay(prompt_text, self.room_id, self.user.id, msg_id)
                 message = status_text
+            elif message.strip().lower() == "/advice":
+                async_get_advice.delay(self.room_id, self.user.id)
+                return
+            elif message.strip().lower() == "/joke":
+                async_get_joke.delay(self.room_id, self.user.id)
+                return
             else:
                 new_msg = await self.save_message(message)
                 msg_id = new_msg.id

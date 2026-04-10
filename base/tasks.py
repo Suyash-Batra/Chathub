@@ -71,7 +71,69 @@ def handle_task_failure(placeholder_id, room_id, error_msg):
             "user": "AI"
         }
     )
-    
+
+
+@shared_task(bind=True, max_retries=1)
+def async_get_advice(self, room_id, user_id):
+    channel_layer = get_channel_layer()
+    try:
+        response = requests.get('https://api.adviceslip.com/advice', timeout=10)
+        if response.status_code == 200:
+            advice_text = response.json()['slip']['advice']
+            room = Room.objects.get(id=room_id)
+            user = User.objects.get(id=user_id)
+            msg = Message.objects.create(
+                user=user,
+                room=room,
+                body=f"Advice 💡: {advice_text}",
+                is_ai_generated=False
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{room_id}",
+                {
+                    "type": "chat_message",
+                    "message": msg.body,
+                    "user": msg.user.username,
+                    "msg_id": msg.id,
+                    "is_ready": True
+                }
+            )
+        else:
+            raise self.retry(countdown=5)
+    except Exception as e:
+        handle_task_failure(None, room_id, str(e))
+    return "Advice delivered"
+
+@shared_task(bind=True, max_retries=1)
+def async_get_joke(self, room_id, user_id):
+    channel_layer = get_channel_layer()
+    try:
+        response = requests.get('https://icanhazdadjoke.com/slack', timeout=10)
+        if response.status_code == 200:
+            joke_text = response.json()['attachments'][0]['text']
+            room = Room.objects.get(id=room_id)
+            user = User.objects.get(id=user_id)
+            msg = Message.objects.create(
+                user=user,
+                room=room,
+                body=f"Joke : {joke_text}",
+                is_ai_generated=False
+            )
+            async_to_sync(channel_layer.group_send)(
+                f"chat_{room_id}",
+                {
+                    "type": "chat_message",
+                    "message": msg.body,
+                    "user": msg.user.username,
+                    "msg_id": msg.id,
+                    "is_ready": True
+                }
+            )
+        else:
+            raise self.retry(countdown=5)
+    except Exception as e:
+        handle_task_failure(None, room_id, str(e))
+    return "Joke delivered"
 
 @shared_task
 def delete_expired_messages():

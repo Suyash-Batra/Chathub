@@ -11,10 +11,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from django.urls import reverse_lazy, reverse
-from .models import Room, Topic, Message, UserBadge
-from .forms import RoomForm, UserForm, TopicForm
+from .models import Room, Topic, Message, UserBadge, Profile
+from .forms import RoomForm, UserForm, TopicForm, ProfileForm
 from django.db.models import Count
 from .tasks import async_generate_image
+
 
 class CreateRoomView(LoginRequiredMixin, CreateView):
     model = Room
@@ -23,10 +24,11 @@ class CreateRoomView(LoginRequiredMixin, CreateView):
     login_url = 'login'
 
     def form_valid(self, form):
-        room = form.save(commit=False)
-        room.host = self.request.user
-        room.save()
-        return redirect('home')
+        form.instance.host = self.request.user
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('home')
 
 class HomeView(ListView):
     model = Room
@@ -112,14 +114,22 @@ class UpdateRoomView(LoginRequiredMixin, UpdateView):
     form_class = RoomForm
     template_name = 'base/room_form.html'
     login_url = 'login'
-    success_url = reverse_lazy('home')
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def get_success_url(self):
+        return reverse('room', kwargs={'pk': self.object.pk})
 
     def dispatch(self, request, *args, **kwargs):
         room = self.get_object()
         if request.user != room.host:
             return HttpResponse('You are not the owner of the room')
         return super().dispatch(request, *args, **kwargs)
-
 class DeleteRoomView(LoginRequiredMixin, DeleteView):
     model = Room
     template_name = 'base/delete.html'
@@ -216,18 +226,20 @@ class UserProfileView(View):
         }
         return render(request, 'base/profile.html', context)
 
+
 class UpdateUserView(LoginRequiredMixin, View):
     def get(self, request):
-        form = UserForm(instance=request.user)
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        form = ProfileForm(instance=profile)
         return render(request, 'base/update_user.html', {'form': form})
 
     def post(self, request):
-        form = UserForm(request.POST, instance=request.user)
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        form = ProfileForm(request.POST, request.FILES, instance=profile)
         if form.is_valid():
             form.save()
             return redirect('user-profile', pk=request.user.id)
         return render(request, 'base/update_user.html', {'form': form})
-
 class AddTopicView(LoginRequiredMixin, CreateView):
     model = Topic
     form_class = TopicForm

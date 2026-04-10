@@ -16,14 +16,15 @@
             {% endif %}
         </header>
 
-        <form method="POST" action="" class="settings-form">
+        <form method="POST" action="" class="settings-form" enctype="multipart/form-data">
             {% csrf_token %}
             
             <div class="django-form-wrapper">
 
     {{ form.name.label_tag }}<br>
     {{ form.name }}<br>
-
+    <label>Avatar:</label><br>
+    {{ form.avatar }}<br>
     {{ form.topic.label_tag }}<br>
     {{ form.topic }}<br>
 

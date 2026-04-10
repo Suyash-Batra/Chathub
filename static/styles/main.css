@@ -1685,3 +1685,138 @@ input:focus, textarea:focus {
 }
 
 .room-title a { color: var(--text-dark); }
+
+.room-vibe {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin-top: 4px;
+  padding: 2px 10px;
+
+  /* Styling the "Vibe" tag */
+  background-color: rgba(114, 137, 218, 0.1); /* Subtle theme color tint */
+  color: #7289da; /* A nice 'blurple' or brand color */
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(114, 137, 218, 0.2);
+}
+
+/* Optional: Add a small dot before the vibe text */
+.room-vibe::before {
+  content: "•";
+  margin-right: 6px;
+  font-size: 1.2rem;
+  line-height: 0;
+}
+
+/* Room Avatar in Header */
+.room-avatar-lg {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px; /* Smooth squircles look great for rooms */
+  object-fit: cover;
+  border: 2px solid #f0f2f5;
+}
+
+/* User Avatar in Chat Feed */
+.user-avatar-sm {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%; /* Traditional circle for people */
+  object-fit: cover;
+  margin-right: 8px;
+}
+
+/* Updated Header Layout */
+.chat-header__info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.profile-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.profile-titles {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-username {
+    margin: 0;
+    font-weight: 700;
+}
+
+.profile-joined {
+    margin: 0;
+    opacity: 0.8;
+}
+
+.room-card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.room-header-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.room-author {
+    line-height: 1.2;
+}
+
+.room-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.room-avatar-lg {
+    flex-shrink: 0; /* Prevents the image from getting squished by long usernames */
+}
+
+.action-link {
+    display: inline-flex;  /* Keeps icon and text on one line */
+    align-items: center;   /* Vertically centers icon and text */
+    gap: 6px;              /* Space between icon and text */
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 5px;
+    font-size: 0.9rem;
+}
+
+.action-link svg {
+    display: block;        /* Removes weird baseline spacing from SVGs */
+    fill: currentColor;    /* Ensures SVG color matches text color */
+}
+
+.edit:hover { background: #f0f2f5; }
+.delete:hover { background: #fee2e2; color: #dc2626; }
+
+.chat-header__info {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-header__content h1 {
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.room-vibe {
+    cursor: help; /* Makes the emoji feel interactive */
+}
+
+.messages-container {
+    /* Subtract the height of the header (approx 60px) and input (approx 70px) */
+    height: calc(100vh - 130px);
+    overflow-y: auto;
+}

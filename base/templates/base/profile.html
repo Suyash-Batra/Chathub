@@ -3,11 +3,19 @@
 {% block content %}
 <div class="profile-container">
     <header class="profile-header">
-        <div class="profile-meta">
-            <h1 class="profile-username">@{{users.username}}</h1><br>
-            <p class="profile-joined" style="font-size: 1rem;">Joined {{users.date_joined|date:"F Y"}}</p>
-        </div>
-        
+<div class="profile-meta" style="display: flex; align-items: center; gap: 20px;">
+    <img src="{{ users.profile_set.first.avatar.url }}"
+         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;">
+
+    <div class="profile-titles" style="display: flex; flex-direction: column; gap: 4px;">
+        <h1 class="profile-username" style="margin: 0; font-size: 1.8rem; line-height: 1.1;">
+            @{{users.username}}
+        </h1>
+        <p class="profile-joined" style="margin: 0; font-size: 0.95rem; color: #6b7280;">
+            Joined {{users.date_joined|date:"F Y"}}
+        </p>
+    </div>
+</div>
         {% if request.user == users %}
         <div class="profile-actions">
             <a href="{% url 'update-user' %}"><button class="action-link edit" style="border: none">Edit Profile</button></a>

@@ -1,5 +1,6 @@
 from django.forms import ModelForm, forms
-from .models import Room, Topic
+from .models import Room, Topic, Profile
+from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
@@ -7,11 +8,14 @@ class RoomForm(ModelForm):
     class Meta:
         model = Room
         fields = '__all__'
+        widgets = {
+            'avatar': forms.FileInput(attrs={'class': 'form-control'}),
+        }
         exclude = ['host', 'participants', 'current_sentiment']
-        
+
     def save(self, commit=True):
         room = super().save(commit=False)
-        if room.key:
+        if 'key' in self.changed_data and room.key:
             room.key = make_password(room.key)
         if commit:
             room.save()
@@ -35,4 +39,13 @@ class TopicForm(ModelForm):
     class Meta:
         model = Topic
         fields = ['name']
+
+class ProfileForm(ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['avatar', 'bio']
+        widgets = {
+            'avatar': forms.FileInput(attrs={'class': 'form-control'}),
+        }
+
         

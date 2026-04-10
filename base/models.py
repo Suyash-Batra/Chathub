@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from encrypted_model_fields.fields import EncryptedTextField
 from datetime import timedelta
-from django.db.models.signals import post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 import os
 import langid
@@ -29,6 +29,7 @@ class Room(models.Model):
     is_ephemeral = models.BooleanField(default=False)
     language = models.CharField(max_length=50, default='en', null=True, blank=True)
     current_sentiment = models.FloatField(default=0.0)
+    avatar = models.ImageField(upload_to='room_avatars/', default='room_avatars/room-default.png', null=True, blank=True)
     
     def update_vibe(self):
         if not self.id: 
@@ -150,3 +151,21 @@ class UserBadge(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.badge.name}"
+
+class Profile(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    avatar = models.ImageField(upload_to='avatars/', default='avatars/avatar-default.png', null=True, blank=True)
+    bio = models.TextField(null=True, blank=True)
+
+    def __str__(self):
+        return self.user.username
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    if created:
+        Profile.objects.create(user=instance)
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    if hasattr(instance, 'profile'):
+        instance.profile_set.first().save()
