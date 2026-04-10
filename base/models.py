@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 import os
+import langid
 from textblob import TextBlob
 from django.db.models import Avg
 
@@ -26,7 +27,7 @@ class Room(models.Model):
     key = models.CharField(max_length=200, blank=True, null=True)
     private = models.BooleanField(default=False)
     is_ephemeral = models.BooleanField(default=False)
-    language = models.CharField(max_length=5, default='en', null=True, blank=True)
+    language = models.CharField(max_length=50, default='en', null=True, blank=True)
     current_sentiment = models.FloatField(default=0.0)
     
     def update_vibe(self):
@@ -52,12 +53,10 @@ class Room(models.Model):
             return "☕", "Neutral / Quiet"
 
     def save(self, *args, **kwargs):
-        if self.description and len(self.description) > 10:
-            try:
-                blob = TextBlob(self.description)
-                self.language = blob.detect_language()
-            except Exception:
-                self.language = 'en'
+        try:
+            self.language = langid.classify(self.description)[0]
+        except:
+            self.language = 'en'
         super().save(*args, **kwargs)
         if self.host:
             try:
