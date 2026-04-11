@@ -16,7 +16,7 @@ def async_generate_image(self, prompt_text, room_id, user_id, placeholder_id=Non
     try:
         encoded_prompt = urllib.parse.quote(prompt_text)
         url = f"https://image.pollinations.ai/prompt/{encoded_prompt}"
-        response = requests.get(url, timeout=300, verify=False)
+        response = requests.get(url, timeout=500)
         if response.status_code == 200:
             image_name = f"ai_{user_id}_{timezone.now().strftime('%Y%m%d%H%M%S')}.png"
             image_file = ContentFile(response.content, name=image_name)
@@ -43,12 +43,12 @@ def async_generate_image(self, prompt_text, room_id, user_id, placeholder_id=Non
                 }
             )
         else:
-            raise self.retry(countdown=15)
+            raise self.retry(countdown=5)
     except Exception as e:
         if self.request.retries >= self.max_retries:
             handle_task_failure(placeholder_id, room_id, str(e))
         else:
-            raise self.retry(exc=e, countdown=10)
+            raise self.retry(exc=e, countdown=5)
 
     return "Success"
 
@@ -108,7 +108,7 @@ def async_get_advice(self, room_id, user_id):
 def async_get_joke(self, room_id, user_id):
     channel_layer = get_channel_layer()
     try:
-        response = requests.get('https://icanhazdadjoke.com/slack', timeout=10)
+        response = requests.get('https://icanhazdadjoke.com/slack', timeout=50)
         if response.status_code == 200:
             joke_text = response.json()['attachments'][0]['text']
             room = Room.objects.get(id=room_id)
