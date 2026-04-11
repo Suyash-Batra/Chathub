@@ -1,5 +1,5 @@
 <div class="activity-feed">
-    {% for message in room_messages %}
+    {% for message in recent_activities %}
         {% if message.room.private == False %}
     <div class="activity-item">
         <div class="activity-header">

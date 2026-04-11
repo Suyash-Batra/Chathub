@@ -996,7 +996,7 @@ background: rgba(0, 88, 228, 0.1);
     /* Left: 220px | Middle: Fluid | Right: 320px */
     grid-template-columns: 220px 1fr 320px;
     gap: 20px;
-    height: calc(100vh - 100px); /* Keeps it within viewable area */
+    height: calc(100vh - 140px); /* Keeps it within viewable area */
     align-items: stretch;
     margin-top: 1rem;
 }
@@ -1050,6 +1050,7 @@ background: rgba(0, 88, 228, 0.1);
     border: 1px solid var(--border);
     border-radius: 12px;
     overflow: hidden; /* Clips the message window */
+    height: 37rem;
 }
 
 .chat-header {
@@ -1820,3 +1821,109 @@ input:focus, textarea:focus {
     height: calc(100vh - 130px);
     overflow-y: auto;
 }
+.profile-bio {
+    background-color: #FFFFFF;
+    padding: 20px !important;
+    border-radius: 10px;
+    border-left: 4px solid var(--color-main); /* Uses your app's primary color */
+}
+
+  .chat-form {
+    background-color: var(--color-dark-medium);
+    padding: 10px 15px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--color-main);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+    height: 35px;
+    border-radius: 50%;
+    transition: background 0.2s;
+  }
+
+  .btn-icon:hover { background: rgba(113, 122, 235, 0.1); }
+
+  #message-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--color-light);
+    flex: 1;
+    font-size: 15px;
+  }
+
+  .btn-submit {
+    background-color: var(--color-main);
+    color: white;
+    border: none;
+    padding: 7px 15px;
+    border-radius: 5px;
+    height: 35px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .message-bubble {
+    position: relative;
+    padding-right: 30px !important;
+  }
+
+  .msg-delete {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      opacity: 0.5;
+      background: transparent !important;
+      border: none !important;
+      outline: none !important;
+      padding: 0;
+      margin: 0;
+      color: var(--color-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+  }
+
+  .msg-delete:hover {
+      opacity: 1;
+      color: #ff4757;
+      transform: scale(1.1);
+  }
+
+  .ai-thinking {
+    font-style: italic;
+    color: var(--color-main);
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+
+  #chat-box {
+    max-height: 70vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+  }
+
+  /* Force remove any inherited underlines from global CSS */
+  .chat-header__info, .chat-header__info h1, .chat-header__info p, .chat-header__info a {
+      text-decoration: none !important;
+      border-bottom: none !important;
+  }

@@ -23,7 +23,9 @@
 
     {{ form.name.label_tag }}<br>
     {{ form.name }}<br>
+     {% if not 'add-topic/' in request.path %}
     <label>Avatar:</label><br>
+     {% endif %}
     {{ form.avatar }}<br>
     {{ form.topic.label_tag }}<br>
     {{ form.topic }}<br>

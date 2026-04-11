@@ -49,7 +49,7 @@ class HomeView(ListView):
         rooms = context['rooms']
         context['topics'] = Topic.objects.annotate(room_count=Count('room')).order_by('-room_count')
         context['roomcount'] = rooms.count()
-        context['room_messages'] = Message.objects.filter(
+        context['recent_activities'] = Message.objects.filter(
             Q(room__topic__name__icontains=q)
         ).order_by('-created')[0:5]
         return context
@@ -64,6 +64,7 @@ class RoomView(View):
         context = {
             'room': room,
             'room_messages': room.message_set.all().order_by('created'),
+            'recent_activities': room.message_set.all().order_by('-created')[:3],
             'participants': room.participants.all()
         }
         return render(request, 'base/room.html', context)
@@ -219,7 +220,7 @@ class UserProfileView(View):
         context = {
             'users': user,
             'rooms': rooms,
-            'room_messages': user.message_set.all()[0:5],
+            'recent_activities': user.message_set.all()[0:5],
             'topics': Topic.objects.all(),
             'roomcount': rooms.count(),
             'badges': badges,

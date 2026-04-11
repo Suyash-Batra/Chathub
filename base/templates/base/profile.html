@@ -6,7 +6,6 @@
 <div class="profile-meta" style="display: flex; align-items: center; gap: 20px;">
     <img src="{{ users.profile_set.first.avatar.url }}"
          style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;">
-
     <div class="profile-titles" style="display: flex; flex-direction: column; gap: 4px;">
         <h1 class="profile-username" style="margin: 0; font-size: 1.8rem; line-height: 1.1;">
             @{{users.username}}
@@ -22,7 +21,12 @@
         </div>
         {% endif %}
     </header>
-
+<div class="profile-bio" style="margin-bottom: 30px; padding: 0 5px;">
+        <h3 style="font-size: 1rem; color: #3f4156; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">About</h3>
+        <p style="margin: 0; line-height: 1.6; color: #51546e; font-size: 1.05rem; max-width: 800px;">
+            {{ users.profile_set.first.bio|default:"Hi, I am new to CHATHUB!." }}
+        </p>
+    </div>
     <div class="profile-grid">
         <aside class="topics-sidebar">
             <h3 class="sidebar-title">Browse Topics</h3>
