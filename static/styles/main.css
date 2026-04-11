@@ -1821,11 +1821,18 @@ input:focus, textarea:focus {
     height: calc(100vh - 130px);
     overflow-y: auto;
 }
+
+.gap {
+    height:20px;
+}
+
 .profile-bio {
-    background-color: #FFFFFF;
+    background-color: var(--surface);
     padding: 20px !important;
-    border-radius: 10px;
-    border-left: 4px solid var(--color-main); /* Uses your app's primary color */
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow);
 }
 
   .chat-form {

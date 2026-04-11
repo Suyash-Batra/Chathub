@@ -4,6 +4,7 @@ from pathlib import Path
 import dj_database_url
 from celery.schedules import crontab
 import pymysql
+
 pymysql.install_as_MySQLdb()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -15,8 +16,8 @@ DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 # Change this from ['127.0.0.1', 'localhost']
 ALLOWED_HOSTS = [
-    'chathub-72tx.onrender.com', 
-    '127.0.0.1', 
+    'chathub-72tx.onrender.com',
+    '127.0.0.1',
     'localhost'
 ]
 
@@ -33,23 +34,32 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
+    'cloudinary_storage',
+    'cloudinary',
+
     # Third party apps
     'rest_framework',
     'encrypted_model_fields',
     'channels',
     'django_celery_beat',
     'corsheaders',
-    
+
     # Local apps
     'base.apps.BaseConfig',
 ]
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
 FIELD_ENCRYPTION_KEY = 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA='
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Best placed here for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # Best placed here for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -68,7 +78,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [REDIS_URL], # Uses the dynamic URL
+            "hosts": [REDIS_URL],  # Uses the dynamic URL
             "capacity": 1500,
             "expiry": 60,
         },
@@ -89,8 +99,8 @@ CELERY_TIMEZONE = 'UTC'
 
 CELERY_BEAT_SCHEDULE = {
     'auto-delete-expired-messages': {
-        'task': 'base.tasks.delete_expired_messages', 
-        'schedule': crontab(minute='*/10'),          
+        'task': 'base.tasks.delete_expired_messages',
+        'schedule': crontab(minute='*/10'),
     },
 }
 # --- APPLICATION PATHS ---
@@ -114,6 +124,7 @@ TEMPLATES = [
 
 # --- DATABASE (MySQL/TiDB) ---
 import dj_database_url
+
 if os.environ.get('DATABASE_URL'):
     DATABASES = {
         'default': dj_database_url.config(
@@ -135,7 +146,7 @@ if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
         db_opts['ssl'] = {'ca': None}
         db_opts.pop('ssl-mode', None)
         db_opts.pop('ssl_mode', None)
-        
+
 # --- AUTH & VALIDATION ---
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},

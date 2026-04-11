@@ -22,8 +22,8 @@
         {% endif %}
     </header>
 <div class="profile-bio" style="margin-bottom: 30px; padding: 0 5px;">
-        <h3 style="font-size: 1rem; color: #3f4156; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">About</h3>
-        <p style="margin: 0; line-height: 1.6; color: #51546e; font-size: 1.05rem; max-width: 800px;">
+        <h3 style="font-size: 1rem; color: var(--text-dark); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">About</h3>
+        <p style="margin: 0; font-size: 0.75rem; line-height: 1.6; color: var(--text-dark); max-width: 800px;">
             {{ users.profile_set.first.bio|default:"Hi, I am new to CHATHUB!." }}
         </p>
     </div>
@@ -41,7 +41,7 @@
         <section class="profile-main">
             <div class="section-header">
                 <h2>Rooms Hosted - {{roomcount}}</h2>
-                <div></div>
+                <div class="gap"></div>
             </div>
             <div class="profile-feed">
                 {% include "base/feed.html" %}
