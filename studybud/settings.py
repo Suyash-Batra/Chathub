@@ -22,39 +22,34 @@ if RENDER_EXTERNAL_HOSTNAME:
 
 # --- APPS CONFIGURATION ---
 INSTALLED_APPS = [
+    'cloudinary_storage',  # MUST be above staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-]
+    'django.contrib.staticfiles',
+    'cloudinary',  # Usually placed here
 
-# FORCED CLOUDINARY ACTIVATION
-CLOUDINARY_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
-
-if CLOUDINARY_NAME:
-    INSTALLED_APPS += ['cloudinary_storage']
-    INSTALLED_APPS += ['django.contrib.staticfiles']
-    INSTALLED_APPS += ['cloudinary']
-
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': CLOUDINARY_NAME,
-        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-    }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-else:
-    INSTALLED_APPS += ['django.contrib.staticfiles']
-
-# The rest of your apps...
-INSTALLED_APPS += [
+    # Third party apps
     'rest_framework',
     'encrypted_model_fields',
     'channels',
     'django_celery_beat',
     'corsheaders',
+
+    # Local apps
     'base.apps.BaseConfig',
 ]
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+# This is the "switch" that tells Django to use the cloud
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA=')
 
