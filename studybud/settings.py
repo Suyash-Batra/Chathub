@@ -48,9 +48,6 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
-# This is the "switch" that tells Django to use the cloud
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA=')
 
 MIDDLEWARE = [
@@ -145,12 +142,12 @@ WSGI_APPLICATION = 'studybud.wsgi.application'
 ASGI_APPLICATION = 'studybud.asgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Force Cloudinary for Media and WhiteNoise for Static
+# Change "staticfiles" from CompressedManifestStaticFilesStorage to just StaticFilesStorage
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "whitenoise.storage.StaticFilesStorage", # <--- CHANGE THIS LINE
     },
 }
