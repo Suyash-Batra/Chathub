@@ -1,32 +1,26 @@
 import os
 from pathlib import Path
-
 import dj_database_url
 from celery.schedules import crontab
 import pymysql
 
 pymysql.install_as_MySQLdb()
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-(w7vo0xlbd5fl9g*^7_...')
+# Detect if we are running on Render
+IS_RENDER = 'RENDER' in os.environ
 
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# --- SECURITY ---
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-local-fallback-key')
+DEBUG = not IS_RENDER  # Automatically False on Render, True locally
 
-# Change this from ['127.0.0.1', 'localhost']
-ALLOWED_HOSTS = [
-    'chathub-72tx.onrender.com',
-    '127.0.0.1',
-    'localhost'
-]
-
-# Better yet, use the Render Environment Variable:
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# Application definition
+# --- APPS ---
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -34,32 +28,31 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    'cloudinary_storage',
-    'cloudinary',
-
-    # Third party apps
+    # Third party
     'rest_framework',
     'encrypted_model_fields',
     'channels',
     'django_celery_beat',
     'corsheaders',
-
-    # Local apps
     'base.apps.BaseConfig',
 ]
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-}
-FIELD_ENCRYPTION_KEY = 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA='
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Add Cloudinary only if we are on Render (or if keys are present)
+if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS.insert(5, 'cloudinary_storage')
+    INSTALLED_APPS.append('cloudinary')
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA=')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # Best placed here for static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,112 +64,74 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'studybud.urls'
 
-# --- REDIS & CHANNELS CONFIG ---
-# Using 127.0.0.1 explicitly to avoid IPv6/localhost resolution delays
-REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/1')
-CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [REDIS_URL],  # Uses the dynamic URL
-            "capacity": 1500,
-            "expiry": 60,
-        },
-    },
-}
-CELERY_TASK_TIME_LIMIT = 120  # 2 minutes max
-CELERY_TASK_SOFT_TIME_LIMIT = 90
-
-# --- CELERY CONFIG ---
-CELERY_BROKER_URL = REDIS_URL
-CELERY_RESULT_BACKEND = None  # We use the DB for results, keeps Redis light
-CELERY_TASK_IGNORE_RESULT = True
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'UTC'
-
-CELERY_BEAT_SCHEDULE = {
-    'auto-delete-expired-messages': {
-        'task': 'base.tasks.delete_expired_messages',
-        'schedule': crontab(minute='*/10'),
-    },
-}
-# --- APPLICATION PATHS ---
-WSGI_APPLICATION = 'studybud.wsgi.application'
-ASGI_APPLICATION = 'studybud.asgi.application'
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-# --- DATABASE (MySQL/TiDB) ---
-import dj_database_url
-
-if os.environ.get('DATABASE_URL'):
+# --- DATABASE ---
+if IS_RENDER:
+    # Production (TiDB/Render)
     DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=600
-        )
+        'default': dj_database_url.config(conn_max_age=600)
     }
+    # TiDB SSL Logic
+    if 'default' in DATABASES:
+        DATABASES['default'].setdefault('OPTIONS', {})
+        DATABASES['default']['OPTIONS']['ssl'] = {'ca': None}
 else:
+    # Local Docker MySQL
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'chathub_db'),
+            'USER': 'root',
+            'PASSWORD': 'password', # Ensure this matches your docker-compose
+            'HOST': 'db',           # Use 'db' service name from docker-compose
+            'PORT': '3306',
+            'OPTIONS': {
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
         }
     }
 
-# TiDB SSL Handshake logic - Defined safely
-if 'default' in DATABASES and 'OPTIONS' in DATABASES['default']:
-    db_opts = DATABASES['default']['OPTIONS']
-    if any(k in db_opts for k in ['ssl-mode', 'ssl_mode']):
-        db_opts['ssl'] = {'ca': None}
-        db_opts.pop('ssl-mode', None)
-        db_opts.pop('ssl_mode', None)
+# --- REDIS & CELERY ---
+# In Docker, redis is reachable at 'redis://redis:6379/1'
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/1')
 
-# --- AUTH & VALIDATION ---
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
+    },
+}
 
-# --- STATIC & MEDIA ---
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+CELERY_BROKER_URL = REDIS_URL
+CELERY_RESULT_BACKEND = None
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# --- REMAINING CONFIG ---
+TEMPLATES = [{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': [BASE_DIR / 'templates'],
+    'APP_DIRS': True,
+    'OPTIONS': {
+        'context_processors': [
+            'django.template.context_processors.request',
+            'django.contrib.auth.context_processors.auth',
+            'django.contrib.messages.context_processors.messages',
+        ],
+    },
+}]
 
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
-# Ensure Media directory exists
-if not os.path.exists(MEDIA_ROOT):
-    os.makedirs(MEDIA_ROOT)
+CSRF_TRUSTED_ORIGINS = ["https://chathub-72tx.onrender.com"]
+if not IS_RENDER:
+    CSRF_TRUSTED_ORIGINS.append("http://localhost:8000")
 
+# Security settings - only strict on Production
+CSRF_COOKIE_SECURE = IS_RENDER
+SESSION_COOKIE_SECURE = IS_RENDER
+
+WSGI_APPLICATION = 'studybud.wsgi.application'
+ASGI_APPLICATION = 'studybud.asgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-CORS_ALLOW_ALL_ORIGINS = True
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://chathub-72tx.onrender.com",
-]
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True

@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # --- THE DATABASE ---
+  db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_DATABASE: chathub_db
+      MYSQL_ROOT_PASSWORD: pass123
+    # WHY: This starts a fresh MySQL server. We name the DB and set a password 
+    # so Django knows how to log in.
+
+  # --- THE MESSAGE BROKER ---
+  redis:
+    image: redis:7-alpine
+    # WHY: This replaces your 'wsl sudo service redis-server start'. 
+    # Alpine is a tiny version of Linux, making this very fast.
+
+  # --- THE WEB SERVER (Daphne) ---
+  web:
+    build: .
+    # STEP-BY-STEP WHY: 
+    # 'build: .' tells Docker to use your Dockerfile to make the image.
+    command: python -m daphne -b 0.0.0.0 -p 8000 studybud.asgi:application
+    # WHY: This is your [4/4] in the .bat file. 0.0.0.0 tells Daphne to 
+    # listen to requests from outside the container.
+    volumes:
+      - .:/app
+    # WHY: This is "Hot Reloading." If you change code on Windows, 
+    # it updates in Docker instantly.
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=mysql://root:pass123@db:3306/chathub_db
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - db
+      - redis
+    # WHY: Django needs DB and Redis to be alive before it starts.
+
+  # --- THE CELERY WORKER ---
+  worker:
+    build: .
+    command: celery -A studybud worker -l info --pool=solo
+    # WHY: This is your [3/4] in the .bat file. It uses the same Python image 
+    # as 'web' but runs the worker command instead of Daphne.
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=mysql://root:pass123@db:3306/chathub_db
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - redis
+
+  # --- THE CELERY BEAT ---
+  beat:
+    build: .
+    command: celery -A studybud beat -l info
+    # WHY: This handles your scheduled tasks.
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_URL=redis://redis:6379/1
+    depends_on:
+      - redis
