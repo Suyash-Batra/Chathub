@@ -21,7 +21,6 @@ if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 # --- APPS CONFIGURATION ---
-# Note: The order here is critical for Cloudinary to handle Media files correctly
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,16 +29,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
 ]
 
-# Cloudinary MUST be above staticfiles to intercept media requests
-if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
+# FORCED CLOUDINARY ACTIVATION
+CLOUDINARY_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME')
+
+if CLOUDINARY_NAME:
     INSTALLED_APPS += ['cloudinary_storage']
-
-INSTALLED_APPS += ['django.contrib.staticfiles']
-
-if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += ['django.contrib.staticfiles']
     INSTALLED_APPS += ['cloudinary']
 
-# Third party and Local apps
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_NAME,
+        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+    }
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    INSTALLED_APPS += ['django.contrib.staticfiles']
+
+# The rest of your apps...
 INSTALLED_APPS += [
     'rest_framework',
     'encrypted_model_fields',
@@ -49,20 +56,11 @@ INSTALLED_APPS += [
     'base.apps.BaseConfig',
 ]
 
-# --- CLOUDINARY SETTINGS ---
-if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-    }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
 FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'CeLRe--mWN5UJ_Zp9-Hzht5ixsZAwJyiUqZzw8KqHGA=')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Handles static files
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -76,11 +74,9 @@ ROOT_URLCONF = 'studybud.urls'
 
 # --- DATABASE ---
 if IS_RENDER:
-    # Production (TiDB/Render)
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600)
     }
-    # Fix for the 'ssl-mode' error on Render/PyMySQL
     if 'default' in DATABASES:
         db_opts = DATABASES['default'].setdefault('OPTIONS', {})
         if any(k in db_opts for k in ['ssl-mode', 'ssl_mode']):
@@ -88,14 +84,13 @@ if IS_RENDER:
             db_opts.pop('ssl-mode', None)
             db_opts.pop('ssl_mode', None)
 else:
-    # Local Docker MySQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.environ.get('DB_NAME', 'chathub_db'),
             'USER': 'root',
             'PASSWORD': 'password',
-            'HOST': 'db', # Service name from docker-compose.yml
+            'HOST': 'db',
             'PORT': '3306',
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -104,7 +99,6 @@ else:
     }
 
 # --- REDIS & CHANNELS ---
-# Locally in Docker, host is 'redis'. On Render, it uses the env variable.
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/1')
 
 CHANNEL_LAYERS = {
