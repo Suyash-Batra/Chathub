@@ -13,22 +13,34 @@ IS_RENDER = 'RENDER' in os.environ
 
 # --- SECURITY ---
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-local-fallback-key')
-DEBUG = not IS_RENDER  # Automatically False on Render, True locally
+DEBUG = not IS_RENDER  # Automatically False on Render (Production), True locally
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
 if RENDER_EXTERNAL_HOSTNAME:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
-# --- APPS ---
+# --- APPS CONFIGURATION ---
+# Note: The order here is critical for Cloudinary to handle Media files correctly
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    # Third party
+]
+
+# Cloudinary MUST be above staticfiles to intercept media requests
+if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += ['cloudinary_storage']
+
+INSTALLED_APPS += ['django.contrib.staticfiles']
+
+if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
+    INSTALLED_APPS += ['cloudinary']
+
+# Third party and Local apps
+INSTALLED_APPS += [
     'rest_framework',
     'encrypted_model_fields',
     'channels',
@@ -37,10 +49,8 @@ INSTALLED_APPS = [
     'base.apps.BaseConfig',
 ]
 
-# Add Cloudinary only if we are on Render (or if keys are present)
+# --- CLOUDINARY SETTINGS ---
 if IS_RENDER or os.environ.get('CLOUDINARY_CLOUD_NAME'):
-    INSTALLED_APPS.insert(5, 'cloudinary_storage')
-    INSTALLED_APPS.append('cloudinary')
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
         'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
@@ -52,7 +62,7 @@ FIELD_ENCRYPTION_KEY = os.environ.get('FIELD_ENCRYPTION_KEY', 'CeLRe--mWN5UJ_Zp9
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Handles static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -70,27 +80,22 @@ if IS_RENDER:
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600)
     }
-
-    # Fix for the 'ssl-mode' error on Render
+    # Fix for the 'ssl-mode' error on Render/PyMySQL
     if 'default' in DATABASES:
-        # 1. Get the options dictionary
         db_opts = DATABASES['default'].setdefault('OPTIONS', {})
-
-        # 2. Check if Render/TiDB sent an ssl-mode (which breaks PyMySQL)
-        # We remove the hyphenated version and use the dictionary PyMySQL expects
         if any(k in db_opts for k in ['ssl-mode', 'ssl_mode']):
-            db_opts['ssl'] = {'ca': None}  # Tells PyMySQL to use SSL
-            db_opts.pop('ssl-mode', None)  # Removes the problematic key
-            db_opts.pop('ssl_mode', None)  # Removes the other variation
+            db_opts['ssl'] = {'ca': None}
+            db_opts.pop('ssl-mode', None)
+            db_opts.pop('ssl_mode', None)
 else:
-    # Local Docker MySQL (Remains the same)
+    # Local Docker MySQL
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.environ.get('DB_NAME', 'chathub_db'),
             'USER': 'root',
             'PASSWORD': 'password',
-            'HOST': 'db',
+            'HOST': 'db', # Service name from docker-compose.yml
             'PORT': '3306',
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
@@ -98,8 +103,8 @@ else:
         }
     }
 
-# --- REDIS & CELERY ---
-# In Docker, redis is reachable at 'redis://redis:6379/1'
+# --- REDIS & CHANNELS ---
+# Locally in Docker, host is 'redis'. On Render, it uses the env variable.
 REDIS_URL = os.environ.get('REDIS_URL', 'redis://redis:6379/1')
 
 CHANNEL_LAYERS = {
@@ -109,11 +114,14 @@ CHANNEL_LAYERS = {
     },
 }
 
+# --- CELERY ---
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = None
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
 
-# --- REMAINING CONFIG ---
+# --- TEMPLATES ---
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
     'DIRS': [BASE_DIR / 'templates'],
@@ -127,16 +135,20 @@ TEMPLATES = [{
     },
 }]
 
+# --- STATIC & MEDIA ---
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# --- SECURITY SETTINGS ---
 CSRF_TRUSTED_ORIGINS = ["https://chathub-72tx.onrender.com"]
 if not IS_RENDER:
     CSRF_TRUSTED_ORIGINS.append("http://localhost:8000")
 
-# Security settings - only strict on Production
 CSRF_COOKIE_SECURE = IS_RENDER
 SESSION_COOKIE_SECURE = IS_RENDER
 
