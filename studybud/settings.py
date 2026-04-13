@@ -70,19 +70,27 @@ if IS_RENDER:
     DATABASES = {
         'default': dj_database_url.config(conn_max_age=600)
     }
-    # TiDB SSL Logic
+
+    # Fix for the 'ssl-mode' error on Render
     if 'default' in DATABASES:
-        DATABASES['default'].setdefault('OPTIONS', {})
-        DATABASES['default']['OPTIONS']['ssl'] = {'ca': None}
+        # 1. Get the options dictionary
+        db_opts = DATABASES['default'].setdefault('OPTIONS', {})
+
+        # 2. Check if Render/TiDB sent an ssl-mode (which breaks PyMySQL)
+        # We remove the hyphenated version and use the dictionary PyMySQL expects
+        if any(k in db_opts for k in ['ssl-mode', 'ssl_mode']):
+            db_opts['ssl'] = {'ca': None}  # Tells PyMySQL to use SSL
+            db_opts.pop('ssl-mode', None)  # Removes the problematic key
+            db_opts.pop('ssl_mode', None)  # Removes the other variation
 else:
-    # Local Docker MySQL
+    # Local Docker MySQL (Remains the same)
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.environ.get('DB_NAME', 'chathub_db'),
             'USER': 'root',
-            'PASSWORD': 'password', # Ensure this matches your docker-compose
-            'HOST': 'db',           # Use 'db' service name from docker-compose
+            'PASSWORD': 'password',
+            'HOST': 'db',
             'PORT': '3306',
             'OPTIONS': {
                 'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
