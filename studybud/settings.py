@@ -144,3 +144,13 @@ SESSION_COOKIE_SECURE = IS_RENDER
 WSGI_APPLICATION = 'studybud.wsgi.application'
 ASGI_APPLICATION = 'studybud.asgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Force Cloudinary for Media and WhiteNoise for Static
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
