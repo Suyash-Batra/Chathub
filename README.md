@@ -1,92 +1,168 @@
 # ChatHub 💬
 
-**ChatHub** is a high-performance, real-time web application designed for organized group discussions. Originally built as a Django prototype, it has been scaled into a production-ready platform featuring live messaging and cloud-native architecture.
+**ChatHub** is a modern, high-performance real-time chat platform built for dynamic conversations, private communities, and media-rich collaboration. Originally started as a Django prototype, it has evolved into a production-ready application with secure messaging, cloud-native deployment, and advanced room management features.
 
-## ✨ New & Advanced Features
+## ✨ Key Features
 
-* **Real-Time Messaging (WebSockets):** Instant message delivery and room updates without page refreshes, powered by Django Channels.
-* **Production Deployment:** Fully hosted on **Render** with automated CI/CD pipelines.
-* **Cloud Database Integration:** Migrated from SQLite to **TiDB (MySQL-compatible)** for scalable, distributed data storage with SSL encryption.
-* **Global Activity Feed:** A live sidebar that keeps you updated on the latest messages across the entire platform.
-* **Voice & Media Ready:** Infrastructure support for voice messaging and file uploads (via Cloudinary integration).
-* **Secure Authentication:** Enhanced security with CSRF protection, secure environment variables, and encrypted model fields.
-* **Dynamic Room Discovery:** Browse rooms by topic or use the global search to find discussions by name or description.
+* **Real-Time Messaging:** Instant message delivery and live room updates powered by WebSockets.
+* **Media Support:** Share photos, files, and voice chats directly inside conversations.
+* **Cloud Media Storage:** Integrated with **Cloudinary** for scalable image and file storage.
+* **Secure Rooms:** Private rooms require a key to join, with room access protected and encrypted.
+* **Encrypted Data:** Private room keys and sensitive message data are securely encrypted.
+* **Public & Private Rooms:** Create open public spaces or restricted private rooms for controlled discussions.
+* **Ephemeral Rooms:** Temporary rooms that automatically delete messages after 24 hours.
+* **Global Search:** Search rooms, users, and content quickly using a global search bar.
+* **Smart Room Intelligence:**
+
+  * Auto-detect room sentiment with mood-tracking signals
+  * Auto-detect room language based on the room description
+* **Built-in Commands:**
+
+  * `/generate` — generate an image prompt
+  * `/advice` — get helpful advice
+  * `/joke` — generate a light, lame joke
+* **Custom Avatars:** Users can upload custom avatars, and rooms can have their own profile pictures.
+* **Admin Management:** Full Django admin panel support for managing users, rooms, messages, and platform data.
+* **Editable Content Tools:** Admins and authorized users can edit users, rooms, and delete messages when needed.
+* **Badge System:** Users can earn badges by completing tasks and achievements, which are displayed on their profiles.
+* **API Support:** Built-in GET APIs for rooms, users, badges, and related platform data.
+* **Production Deployment:** Hosted on **Render** for reliable cloud deployment.
+* **Database Power:** Uses **TiDB** as the database for scalable, MySQL-compatible storage.
+* **Redis Support:** Uses **Upstash Redis** for caching, real-time communication, and background task support.
+* **Docker Support:** Includes a `Dockerfile` and `docker-compose.yml` for containerized development and deployment.
 
 ## 🛠️ Technical Stack
 
 * **Backend:** Python 3.14 / Django 5.2
-* **Asynchronous Engine:** **Daphne** (ASGI) & **Django Channels**
-* **Real-Time Layer:** **Redis** (via Upstash) for WebSocket layering and task queuing.
-* **Database:** **TiDB Cloud** (MySQL) with server-side SSL certificates.
-* **Static/Media Hosting:** **WhiteNoise** for optimized static delivery; Cloudinary-ready for media.
-* **Task Queue:** **Celery** integration for background processing (Optional/Development).
-* **Frontend:** HTML5, CSS3 (Custom Flexbox/Grid), JavaScript (WebSockets).
-
----
+* **Real-Time Engine:** Django Channels + Daphne
+* **Database:** TiDB Cloud (MySQL-compatible)
+* **Cache / Message Broker:** Upstash Redis
+* **Media Storage:** Cloudinary
+* **Deployment:** Render
+* **Containerization:** Docker & Docker Compose
+* **Frontend:** HTML5, CSS3, JavaScript
+* **Task Processing:** Celery (optional / background tasks)
+* **Static File Handling:** WhiteNoise
 
 ## 🚀 Getting Started
 
 ### Prerequisites
+
 * Python 3.10 or higher
-* Redis Server (or Upstash account)
-* TiDB / MySQL Database
+* TiDB database access
+* Upstash Redis account
+* Cloudinary account for media storage
+* Docker (optional, for containerized setup)
 
-### Installation
+### Installation (Local Setup)
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/YourUsername/ChatHub.git
-    cd ChatHub
-    ```
+1. **Clone the repository**
 
-2.  **Set up a Virtual Environment**
-    ```bash
-    python -m venv venv
-    # Windows: venv\Scripts\activate
-    # Mac/Linux: source venv/bin/activate
-    ```
+   ```bash
+   git clone https://github.com/YourUsername/ChatHub.git
+   cd ChatHub
+   ```
 
-3.  **Install Dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
+2. **Create a virtual environment**
 
-4.  **Environment Variables**
-    Create a `.env` file in the root directory:
-    ```env
-    DATABASE_URL=your_tidb_connection_string
-    REDIS_URL=your_redis_url
-    SECRET_KEY=your_django_secret_key
-    DEBUG=True
-    ```
+   ```bash
+   python -m venv venv
+   # Windows:
+   venv\Scripts\activate
+   # Mac/Linux:
+   source venv/bin/activate
+   ```
 
-5.  **Run Migrations & Start**
-    ```bash
-    python manage.py migrate
-    python manage.py runserver
-    ```
-    Access the app at `http://127.0.0.1:8000/`.
+3. **Install dependencies**
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Set environment variables**
+   Create a `.env` file in the project root:
+
+   ```env
+   SECRET_KEY=your_django_secret_key
+   DEBUG=True
+
+   DATABASE_URL=your_tidb_connection_string
+   REDIS_URL=your_upstash_redis_url
+
+   CLOUDINARY_CLOUD_NAME=your_cloud_name
+   CLOUDINARY_API_KEY=your_api_key
+   CLOUDINARY_API_SECRET=your_api_secret
+   ```
+
+5. **Run migrations and start the server**
+
+   ```bash
+   python manage.py migrate
+   python manage.py runserver
+   ```
+
+6. **Open the app**
+
+   ```
+   http://127.0.0.1:8000/
+   ```
+
+---
+
+## 🐳 Docker Setup
+
+ChatHub supports containerized deployment using Docker.
+
+1. **Build and start containers**
+
+   ```bash
+   docker-compose up --build
+   ```
+
+2. **Or use the provided startup script (Windows)**
+
+   ```bash
+   start.bat
+   ```
+
+This will automatically spin up the application along with required services.
 
 ---
 
 ## 📂 Project Architecture
 
-* **`studybud/asgi.py`**: The entry point for the ASGI server (Daphne), handling both HTTP and WebSocket protocols.
-* **`base/consumers.py`**: Contains the WebSocket logic for real-time chat broadcasting.
-* **`base/models.py`**: Relational logic for `User`, `Room`, `Topic`, and `Message` with support for encrypted fields.
-* **`settings.py`**: Production-ready configuration including `WhiteNoise`, `dj-database-url`, and `CSRF_TRUSTED_ORIGINS`.
+* **`studybud/asgi.py`** — ASGI entry point for HTTP and WebSocket traffic
+* **`base/consumers.py`** — WebSocket logic for real-time chat messages
+* **`base/models.py`** — Data models for users, rooms, topics, messages, badges, and encrypted room access
+* **`settings.py`** — Production configuration for TiDB, Redis, Cloudinary, and deployment settings
+* **`base/views.py`** — Room, profile, search, and API-related views
+
+## 🌐 Deployment Notes
+
+**Live Demo:** https://chathub-72tx.onrender.com
+
+### Media Storage
+
+ChatHub uses **Cloudinary** for cloud-based media handling, making uploads reliable in production environments.
+
+### Security
+
+ChatHub is designed with security in mind, including encrypted private room keys, secure environment variables, and controlled access to rooms and messages.
+
+## 🏅 Badges & Achievements
+
+Users can earn badges by completing platform tasks and milestones. These badges are displayed on their profiles as a record of activity and achievement.
+
+## 📡 API Features
+
+ChatHub provides GET endpoints for:
+
+* Rooms
+* Users
+* Badges
+
+These APIs make it easy to extend or integrate with other services.
 
 ---
 
-## 🌐 Live Demo & Deployment Notes
-
-**Live Link:** [https://chathub-72tx.onrender.com](https://chathub-72tx.onrender.com)
-
-### ⚠️ Important Note on Media Files (Images/Uploads)
-
-While the application supports full image and file transitions **locally**, the live demo has specific limitations due to the **Render Free Tier** infrastructure:
-
-* **Local Environment:** Files and images work perfectly as they are stored on your local persistent disk.
-* **Live Production:** Render uses an **ephemeral file system**. This means any file uploaded to the `chat-files/` directory is wiped immediately whenever the instance restarts or a new deployment occurs. 
-* **No 24-Hour Persistence:** Unlike some "temporary" hosting, the Free Tier does not guarantee even short-term persistence (like 24 hours) for local media storage.
-* **Database Persistence:** All text-based data (Rooms, Messages, Users, and Topics) is **100% persistent** as it is hosted on a separate **TiDB Cloud** cluster.
+**ChatHub** combines real-time messaging, cloud-native deployment, secure collaboration, and smart room features into one powerful platform.
