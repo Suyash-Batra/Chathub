@@ -81,7 +81,7 @@ else:
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.environ.get('DB_NAME', 'chathub_db'),
             'USER': 'root',
-            'PASSWORD': 'password',
+            'PASSWORD': 'pass123',
             'HOST': 'db',
             'PORT': '3306',
             'OPTIONS': {
@@ -142,12 +142,12 @@ WSGI_APPLICATION = 'studybud.wsgi.application'
 ASGI_APPLICATION = 'studybud.asgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Change "staticfiles" from CompressedManifestStaticFilesStorage to just StaticFilesStorage
-STORAGES = {
-    "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.StaticFilesStorage", # <--- CHANGE THIS LINE
-    },
-}
+if IS_RENDER:
+    STORAGES = {
+        "default": {
+            "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+        "staticfiles": {
+            "BACKEND": "whitenoise.storage.StaticFilesStorage", # <--- CHANGE THIS LINE
+        },
+    }
