@@ -126,11 +126,11 @@ class Message(models.Model):
     
 @receiver(post_delete, sender=Message)
 def delete_files_on_message_delete(sender, instance, **kwargs):
-    audio = getattr(instance, 'audio_file', None)
-    msg_file = getattr(instance, 'message_file', None)
-    for f in [audio, msg_file]:
-        if f and hasattr(f, 'path') and os.path.isfile(f.path):
-            os.remove(f.path)
+    for field_name in ['audio_file', 'message_file']:
+        f = getattr(instance, field_name, None)
+
+        if f:
+            f.delete(save=False)
             
 class Badge(models.Model):
     name = models.CharField(max_length=100)
