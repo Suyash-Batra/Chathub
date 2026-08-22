@@ -29,8 +29,13 @@ class Room(models.Model):
     is_ephemeral = models.BooleanField(default=False)
     language = models.CharField(max_length=50, default='en', null=True, blank=True)
     current_sentiment = models.FloatField(default=0.0)
-    avatar = models.ImageField(upload_to='room_avatars/', default='room_avatars/room-default.png', null=True, blank=True)
-    
+    avatar = models.ImageField(
+        upload_to='room_avatars/',
+        default='room-default_ytqbuu.png',
+        null=True,
+        blank=True
+    )
+
     def update_vibe(self):
         if not self.id: 
             return 
