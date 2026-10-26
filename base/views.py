@@ -255,9 +255,22 @@ class VoiceUploadView(LoginRequiredMixin, View):
     def post(self, request, pk):
         room = get_object_or_404(Room, id=pk)
         audio = request.FILES.get('audio')
+
         if audio:
-            msg = Message.objects.create(user=request.user, room=room, audio_file=audio, body="Voice Message")
-            return JsonResponse({'id': msg.id, 'audio_url': msg.audio_file.url, 'user': request.user.username, 'user_id': request.user.id})
+            msg = Message.objects.create(
+                user=request.user,
+                room=room,
+                audio_file=audio,
+                body="Voice Message"
+            )
+
+            return JsonResponse({
+                'id': msg.id,
+                'audio_url': msg.audio_file.url,
+                'user': request.user.username,
+                'user_id': request.user.id
+            })
+
         return JsonResponse({'error': 'No audio'}, status=400)
 
 class FileUploadView(LoginRequiredMixin, View):

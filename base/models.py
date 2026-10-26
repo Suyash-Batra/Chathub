@@ -6,6 +6,7 @@ from datetime import timedelta
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 import os
+from cloudinary_storage.storage import VideoMediaCloudinaryStorage
 import langid
 from textblob import TextBlob
 from django.db.models import Avg
@@ -91,7 +92,12 @@ class Message(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     body = EncryptedTextField(null=True)
-    audio_file = models.FileField(upload_to='voice_messages/', null=True, blank=True)
+    audio_file = models.FileField(
+        upload_to='voice_messages/',
+        storage=VideoMediaCloudinaryStorage(),
+        null=True,
+        blank=True
+    )
     message_file = models.FileField(upload_to='chat-files/', null=True, blank=True)
     is_image = models.BooleanField(default=False)
     is_ai_generated = models.BooleanField(default=False)
