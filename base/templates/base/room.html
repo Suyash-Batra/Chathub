@@ -264,27 +264,105 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    recordBtn.addEventListener("click", async () => {
-        if (!mediaRecorder || mediaRecorder.state === "inactive") {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks);
+
+recordBtn.addEventListener("click", async () => {
+    try {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+            recordBtn.title = "Record Voice";
+            return;
+        }
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert("Voice recording requires HTTPS or localhost.");
+            return;
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
+
+        const options = MediaRecorder.isTypeSupported("audio/webm")
+            ? { mimeType: "audio/webm" }
+            : {};
+
+        mediaRecorder = new MediaRecorder(stream, options);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+                audioChunks.push(event.data);
+            }
+        };
+
+        mediaRecorder.onerror = (event) => {
+            console.error("Recording error:", event.error);
+            alert("Recording failed. Please try again.");
+        };
+
+        mediaRecorder.onstop = async () => {
+            try {
+                const audioBlob = new Blob(audioChunks, {
+                    type: mediaRecorder.mimeType || "audio/webm"
+                });
+
+                if (!audioBlob.size) {
+                    alert("No audio was recorded.");
+                    return;
+                }
+
                 const formData = new FormData();
                 formData.append("audio", audioBlob, "voice.webm");
-                const resp = await fetch(`/upload-voice/${roomId}/`, {
+
+                const response = await fetch(`/upload-voice/${roomId}/`, {
                     method: "POST",
-                    headers: { "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value },
-                    body: formData,
+                    headers: {
+                        "X-CSRFToken": document.querySelector(
+                            "[name=csrfmiddlewaretoken]"
+                        ).value
+                    },
+                    body: formData
                 });
-                const data = await resp.json();
-                if (data.audio_url) socket.send(JSON.stringify({ message: "Voice", audio_url: data.audio_url, id: data.id }));
-            };
-            mediaRecorder.start();
-        } else mediaRecorder.stop();
-    });
+
+                if (!response.ok) {
+                    throw new Error(`Upload failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.audio_url || !data.id) {
+                    throw new Error(
+                        data.error || "Upload response is missing audio_url or id."
+                    );
+                }
+
+                if (!socket || socket.readyState !== WebSocket.OPEN) {
+                    throw new Error("Chat connection is not ready. Refresh and try again.");
+                }
+
+                socket.send(JSON.stringify({
+                    message: "Voice",
+                    audio_url: data.audio_url,
+                    id: data.id
+                }));
+
+            } catch (error) {
+                console.error("Voice upload error:", error);
+                alert("Could not send voice message. Check the browser console.");
+            } finally {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        };
+
+        mediaRecorder.start();
+        recordBtn.title = "Stop Recording";
+
+    } catch (error) {
+        console.error("Microphone error:", error);
+        alert("Could not access the microphone. Check browser permissions.");
+    }
+});
+
 
     fileBtn.addEventListener("click", () => fileInput.click());
     fileInput.addEventListener("change", async () => {

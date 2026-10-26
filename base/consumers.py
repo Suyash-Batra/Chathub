@@ -1,3 +1,4 @@
+
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
@@ -10,52 +11,106 @@ class ChatConsumer(AsyncWebsocketConsumer):
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'chat_{self.room_id}'
         self.user = self.scope['user']
+
+        if not self.user.is_authenticated:
+            await self.close()
+            return
+
         try:
-            await self.channel_layer.group_add(self.room_group_name, self.channel_name)
+            await self.channel_layer.group_add(
+                self.room_group_name, self.channel_name
+            )
             await self.accept()
         except Exception as e:
             print(f"WS Connection Error: {e}")
             await self.close()
-    async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
-    async def receive(self, text_data):
-        data = json.loads(text_data)
+    async def disconnect(self, close_code):
+        if hasattr(self, 'room_group_name'):
+            await self.channel_layer.group_discard(
+                self.room_group_name, self.channel_name
+            )
+
+    async def receive(self, text_data=None, bytes_data=None):
+        if not text_data:
+            return
+
+        try:
+            data = json.loads(text_data)
+        except (json.JSONDecodeError, TypeError):
+            return
+
         message = data.get('message', '')
         audio_url = data.get('audio_url')
         file_url = data.get('file_url')
         existing_id = data.get('id')
-        if self.user.is_authenticated:
-            if existing_id:
-                msg_id = existing_id
-            elif message.startswith('/generate '):
-                prompt_text = message.replace('/generate ', '').strip()
-                status_text = f"✨ AI is thinking: '{prompt_text}'..."
-                new_msg = await self.save_message(status_text)
-                msg_id = new_msg.id
-                async_generate_image.delay(prompt_text, self.room_id, self.user.id, msg_id)
-                message = status_text
-            elif message.strip().lower() == "/advice":
-                async_get_advice.delay(self.room_id, self.user.id)
+
+        if not self.user.is_authenticated:
+            return
+
+        if existing_id:
+            msg_id = existing_id
+
+            saved_message = await self.get_existing_message(msg_id)
+            if not saved_message:
+                await self.send(text_data=json.dumps({
+                    'error': 'Message not found'
+                }))
                 return
-            elif message.strip().lower() == "/joke":
-                async_get_joke.delay(self.room_id, self.user.id)
+
+        elif message.startswith('/generate '):
+            prompt_text = message.replace('/generate ', '', 1).strip()
+            if not prompt_text:
                 return
-            else:
-                new_msg = await self.save_message(message)
-                msg_id = new_msg.id
+
+            status_text = f"✨ AI is thinking: '{prompt_text}'..."
+            new_msg = await self.save_message(status_text)
+            msg_id = new_msg.id
+
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {
                     'type': 'chat_message',
-                    'message': message,
+                    'message': status_text,
                     'user': self.user.username,
                     'user_id': self.user.id,
-                    'audio_url': audio_url,
-                    'file_url': file_url,
                     'msg_id': msg_id,
                 }
             )
+
+            async_generate_image.delay(
+                prompt_text, self.room_id, self.user.id, msg_id
+            )
+            return
+
+        elif message.strip().lower() == "/advice":
+            async_get_advice.delay(self.room_id, self.user.id)
+            return
+
+        elif message.strip().lower() == "/joke":
+            async_get_joke.delay(self.room_id, self.user.id)
+            return
+
+        else:
+            if not message.strip() and not audio_url and not file_url:
+                return
+
+            new_msg = await self.save_message(message)
+            msg_id = new_msg.id
+
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {
+                'type': 'chat_message',
+                'message': message,
+                'user': self.user.username,
+                'user_id': self.user.id,
+                'audio_url': audio_url,
+                'file_url': file_url,
+                'is_image': data.get('is_image', False),
+                'msg_id': msg_id,
+            }
+        )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps(event))
@@ -63,4 +118,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def save_message(self, body):
         room = Room.objects.get(id=self.room_id)
-        return Message.objects.create(user=self.user, room=room, body=body)
+        return Message.objects.create(
+            user=self.user,
+            room=room,
+            body=body
+        )
+
+    @database_sync_to_async
+    def get_existing_message(self, msg_id):
+        return Message.objects.filter(
+            id=msg_id,
+            room_id=self.room_id,
+            user=self.user
+        ).first()
