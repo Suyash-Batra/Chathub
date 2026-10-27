@@ -18,6 +18,9 @@
         {% if request.user == users %}
         <div class="profile-actions">
             <a href="{% url 'update-user' %}"><button class="action-link edit" style="border: none">Edit Profile</button></a>
+            {% if request.user.is_staff == 1 %}
+            <a href="{% url 'admin:index' %}"><button class="action-link edit" style="border: none">Admin Page</button></a>
+            {% endif %}
         </div>
         {% endif %}
     </header>
